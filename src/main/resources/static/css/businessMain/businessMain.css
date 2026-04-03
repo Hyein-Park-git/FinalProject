@@ -1,0 +1,718 @@
+@charset "UTF-8";
+
+/* [0] 폰트 임포트: Montserrat(슬로건용) & Pretendard(기본용) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+body {
+    font-family: 'Pretendard', sans-serif;
+    /*background-color:   #f8f9fa! important;*/
+}
+
+.main-content {
+    width: 1200px;
+    margin: 0 auto;
+    padding: 40px 0;
+    box-sizing: border-box;
+}
+
+.box-gray {
+    background-color: #e0e0e0;
+    border: 1px solid #bcbcbc;
+    width: 100%;
+}
+
+h3 { margin-bottom: 20px; font-size: 20px; font-family: sans-serif; }
+
+/* 상단 레이아웃 */
+.section-top { display: flex; gap: 40px; margin-bottom: 60px; }
+.calendar-group { width: 60%; }
+
+.side-group {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    height: 530px;
+}
+
+.order-box {
+    height: 240px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.order-box::-webkit-scrollbar { display: none; }
+
+.order-box-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: #b8b8b8;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.order-zone { flex-shrink: 0; }
+
+.order-zone .btn-go-list,
+.order-zone .view-all-btn {
+    display: inline-block !important;
+    margin-top: 10px;
+    padding: 8px 20px;
+    background: #1d1d1f;
+    color: #ffffff !important;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.order-zone .btn-go-list:hover,
+.order-zone .view-all-btn:hover {
+    background: #3a3a3c;
+}
+.view-all {
+    color: #0071e3;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+.view-all:hover {
+    opacity: 0.7;
+}
+.vertical-dots {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 10px;
+    padding: 10px 0;
+}
+.vertical-dots span { font-size: 7px; color: #ccc; }
+
+.notice-zone { flex-shrink: 0; }
+
+.link-wrapper {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.notice-box { height: 200px; }
+
+
+/* ────────────────────────────────────
+   My PortFolio Section
+──────────────────────────────────── */
+.section-portfolio { margin-bottom: 40px; }
+
+.portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px !important;
+}
+
+.section-portfolio h3 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #1d1d1f !important;
+    letter-spacing: -0.4px;
+    margin: 0 !important;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif !important;
+}
+
+.section-portfolio .post-view-all {
+    font-size: 13px;
+    color: #0071e3;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.portfolio-full {
+    height: 280px !important;
+    width: 1200px;
+    overflow: hidden;
+    background: transparent !important;
+    border: none !important;
+    padding: 0;
+}
+
+.portfolio-slider {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    height: 100%;
+}
+
+.portfolio-card {
+    width: 250px !important;
+    height: 250px !important;
+    margin-top: 10px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.08);
+    margin-right: 20px;
+    display: flex !important;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
+}
+
+.portfolio-card:hover { transform: translateY(-5px); }
+
+.card-img-wrap {
+    width: 100%;
+    height: 180px;
+    background: #f5f5f7;
+    overflow: hidden;
+}
+
+.card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.portfolio-empty {
+    width: 100% !important;
+    height: 280px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+.portfolio-empty > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.portfolio-empty p {
+    font-size: 15px;
+    color: #6e6e73;
+    margin-bottom: 20px !important;
+}
+
+.portfolio-empty .btn-go-list {
+    display: inline-block !important;
+    margin: 0 auto !important;
+}
+
+.btn-go-list {
+    display: inline-block;
+    padding: 10px 24px;
+    background: #1d1d1f;
+    color: #ffffff;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.portfolio-slider.no-slider {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0;
+    justify-content: flex-start;
+}
+
+.card-no {
+    font-size: 11px;
+    font-weight: 700;
+    color: #c0c0c0;
+    text-transform: uppercase;
+}
+
+
+/* ────────────────────────────────────
+   New Post Section
+──────────────────────────────────── */
+.section-post {
+    width: 100%;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 33px;
+}
+
+.post-header h3 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #1d1d1f !important;
+    letter-spacing: -0.4px;
+    margin: 0 !important;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif !important;
+}
+
+.post-view-all {
+    font-size: 13px;
+    color: #0071e3;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s;
+}
+
+.post-view-all:hover { opacity: 0.7; }
+
+.section-post .post-nav {
+    display: inline-flex !important;
+    background: #e8e8ed;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px !important;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6e6e73;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+}
+
+.filter-btn.active {
+    background: #ffffff;
+    color: #1d1d1f;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 0.5px 1px rgba(0,0,0,0.08);
+}
+
+.filter-btn:hover:not(.active) { color: #1d1d1f; }
+
+.section-post .post-full {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    overflow: hidden;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+.main-request-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    background: #ffffff;
+}
+
+.main-request-item:last-child { border-bottom: none; }
+.main-request-item:hover { background: #f5f5f7; }
+
+.item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mini-thumbnail {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #f0f0f0;
+    flex-shrink: 0;
+}
+
+.item-cat {
+    font-size: 11px;
+    font-weight: 600;
+    color: #0071e3;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+    margin: 0;
+    letter-spacing: -0.1px;
+}
+
+.item-right {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.item-price {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+}
+
+.item-date {
+    display: block;
+    font-size: 12px;
+    color: #6e6e73;
+    margin-top: 2px;
+}
+
+.empty-msg {
+    text-align: center;
+    padding: 48px 0;
+    color: #6e6e73;
+    font-size: 14px;
+}
+
+
+/* ────────────────────────────────────
+   Calendar (cal-main / cal-sub)
+──────────────────────────────────── */
+
+#calendar { height: 100% !important; }
+
+.fc .fc-header-toolbar { display: none !important; }
+.fc a { text-decoration: none !important; color: #000000 !important; }
+
+.fc .fc-day-today { background: transparent !important; }
+.fc .fc-day-today .fc-daygrid-day-number {
+    color: #0071e3 !important;
+    font-weight: 800;
+}
+
+/* 달력 한 칸 높이 고정 — overflow: visible 로 변경해야 multi-day 바가 보임 */
+.fc .fc-daygrid-day-frame {
+    min-height: 60px !important;
+    overflow: visible !important;
+}
+
+.fc .fc-daygrid-day-events {
+    margin-top: 6px !important;
+}
+
+/* 이벤트 바 스타일 */
+.fc-event,
+.fc-v-event,
+.fc-h-event {
+    background-color: #f5f5f7 !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    margin-bottom: 1px !important;
+    opacity: 1 !important;
+}
+
+.fc-event-title,
+.fc-event-time,
+.fc-event-main {
+    color: #1d1d1f !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+}
+
+.fc-event:hover {
+    background-color: #e8e8ed !important;
+    border-color: rgba(0,0,0,0.15) !important;
+}
+
+.fc-daygrid-event-dot { display: none !important; }
+
+.fc-daygrid-more-link {
+    color: #000000 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+}
+
+.fc-day-other { background-color: transparent !important; }
+.fc-day-other .fc-daygrid-day-top,
+.fc-day-other .fc-daygrid-day-number {
+    visibility: hidden !important;
+    background-color: transparent !important;
+}
+
+.fc .fc-daygrid-day {
+    background-color: transparent !important;
+    position: relative !important;
+}
+
+/* 셀 테두리 */
+.fc table,
+.fc td,
+.fc th,
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid-sync-table,
+.fc .fc-scrollgrid-section > td {
+    border-color: #eeeeee !important;
+}
+
+.fc .fc-scrollgrid { border: none !important; }
+.fc .fc-scrollgrid-section-liquid > td { border-bottom: none !important; }
+.fc .fc-daygrid-body { border-right: none !important; }
+.fc .fc-scrollgrid-section > td:last-child { border-right: none !important; }
+.fc td:last-child, .fc th:last-child { border-right: none !important; }
+
+/* cal-sub */
+.cal-sub {
+    height: 90px !important;
+    margin-top: 20px;
+    background: #ffffff !important;
+    border: 1px solid #eeeeee !important;
+    border-radius: 16px;
+    padding: 0 !important;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.cal-sub::-webkit-scrollbar { display: none; }
+
+.cal-sub .schedule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 25px;
+    height: 100%;
+}
+
+.cal-sub .row-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.cal-sub .badge-blue {
+    background: #000 !important;
+    color: #fff !important;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cal-sub .info-area h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 2px 0 !important;
+    color: #1d1d1f;
+}
+
+.cal-sub .period-text {
+    font-size: 12px;
+    color: #888;
+    margin: 0 !important;
+}
+
+.cal-sub .customer-info {
+    margin-left: auto;
+    margin-right: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.cal-sub .btn-link {
+    border: 1px solid #000;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #000;
+    color: #ffffff !important;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.cal-sub .btn-link:hover {
+    background: #000;
+    color: #fff !important;
+}
+
+/* order-box */
+.order-zone .order-box {
+    height: 240px !important;
+    background: #ffffff !important;
+    border: 1px solid #eeeeee !important;
+    border-radius: 16px;
+}
+
+/* notice-box */
+.notice-zone .notice-box {
+    height: 170px !important;
+    background: #ffffff !important;
+    border: 1px solid #eeeeee !important;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.notice-zone .notice-box::-webkit-scrollbar { display: none; }
+
+.order-box-empty, .empty-msg-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #b8b8b8;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none !important;
+}
+
+.notice-zone h3 {
+    margin-bottom: 12px !important;
+}
+
+.cal-link-wrapper {
+    margin-top: 15px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.notice-zone .link-wrapper {
+    margin-top: 20px;
+}
+
+/*여기부터 메인 수정본*/
+.cal-wrapper {
+    border: 1px solid #eeeeee;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.cal-main {
+    height: 450px !important;
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 20px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box;
+}
+/*공지 쪽 css*/
+.mini-notice-list {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 0;
+}
+
+.mini-notice-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    text-decoration: none !important;
+    border-bottom: 1px solid #f5f5f7;
+    transition: background-color 0.2s ease;
+}
+
+.mini-notice-item:last-child {
+    border-bottom: none;
+}
+
+.mini-notice-item:hover {
+    background-color: #fafafa;
+}
+
+.mini-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+
+.mini-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: -0.3px;
+}
+.badge-all {background: #86868b; color: #f5f5f7; }
+.badge-biz {  background: #333; color: #f1f8e9; }
+
+.mini-title {
+    font-size: 0.9rem;
+    color: #1d1d1f;
+    font-weight: 500;
+    white-space: nowrap;   
+    overflow: hidden;         
+    text-overflow: ellipsis;  
+}
+
+
+.mini-date {
+    font-size: 0.8rem;
+    color: #a1a1a6;
+    margin-left: 15px;
+    white-space: nowrap;
+}
+
+
+.mini-empty-msg {
+    text-align: center;
+    padding: 50px 0;
+    font-size: 0.85rem;
+    color: #a1a1a6;
+}

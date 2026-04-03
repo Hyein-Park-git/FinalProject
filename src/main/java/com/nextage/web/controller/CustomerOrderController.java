@@ -1,0 +1,102 @@
+package com.nextage.web.controller;
+
+import com.nextage.web.domain.PaymentDTO;
+import com.nextage.web.service.ChatService;
+import com.nextage.web.service.CustomerPaymentService;
+import com.nextage.web.userDetails.CustomerUserDetails;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@Controller                          // ✅ @RestController → @Controller 로 변경
+@RequestMapping("/customer/order")
+@RequiredArgsConstructor
+public class CustomerOrderController {
+
+    private final CustomerPaymentService paymentService;
+    private final ChatService chatService;
+
+    // 임시 테스트용 customer_id (로그인 연동 후 제거)
+    //private static final Long TEMP_CUSTOMER_ID = 1L;
+
+    @PostMapping("/payment/create")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> createOrder(
+            @RequestBody Map<String, Integer> body,
+            @AuthenticationPrincipal CustomerUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(401)
+                   .body(Map.of("error", "로그인이 필요합니다."));
+        }
+
+        Long customerId  = userDetails.getCustomerId();
+        int  totalAmount = body.get("totalAmount");
+        String orderNo   = paymentService.createOrder(customerId, totalAmount);
+        return ResponseEntity.ok(Map.of("orderNo", orderNo));
+    }
+
+    /**
+     * POST /order/payment/verify
+     * 결제 완료 후 금액 검증 + payment_status 업데이트
+     */
+    @PostMapping("/payment/verify")
+    @ResponseBody                    // ✅ JSON 응답 메서드에 @ResponseBody 추가
+    public ResponseEntity<Map<String, Object>> verifyPayment(@RequestBody PaymentDTO dto) {
+        boolean success = paymentService.verifyAndComplete(dto);
+
+        if (success) {
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "결제가 완료되었습니다.",
+                "orderNo", dto.getOrderNo()
+            ));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "결제 검증에 실패했습니다."
+            ));
+        }
+    }
+
+    /**
+     * GET /order/complete
+     * 결제 완료 페이지
+     */
+    @GetMapping("/complete")
+    public String completePage(
+            @RequestParam("orderNo") String orderNo,  // ✅ name 명시
+            org.springframework.ui.Model model) {
+
+        Integer totalAmount = paymentService.getTotalAmountByOrderNo(orderNo);
+
+        model.addAttribute("orderNo",     orderNo);
+        model.addAttribute("totalAmount", totalAmount != null ? totalAmount : 0);
+        model.addAttribute("redirectUrl", "/customer/order/history");
+        return "views/shop/customer-payment-complete";
+    }
+    
+    @GetMapping("/chat/unread/{roomId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getUnreadCount(
+            @PathVariable("roomId") Long roomId,
+            Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated())
+            return ResponseEntity.status(403).body(Map.of("count", 0));
+
+        Object principal = authentication.getPrincipal();
+        String userType = (principal instanceof com.nextage.web.userDetails.CustomerUserDetails)
+                ? "CUSTOMER" : "BUSINESS";
+
+        int count = chatService.getUnreadCount(roomId, userType);
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+}

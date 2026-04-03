@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/customer-layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>판매 관리 - Nextage Admin</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Pretendard', sans-serif; background: #fafafa; color: #333; }
+        .wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px 80px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .top-bar-title { font-size: 32px; font-weight: 900; }
+        .search-box { background: #fff; border: 1px solid #ebebeb; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .search-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+        .search-row:last-child { margin-bottom: 0; }
+        .search-input { flex: 1; min-width: 160px; padding: 10px 14px; border: 1.5px solid #ebebeb; border-radius: 10px; font-size: 13px; color: #333; outline: none; }
+        .search-input:focus { border-color: #bd93f9; }
+        .period-btn { padding: 8px 16px; border: 1.5px solid #ebebeb; border-radius: 20px; background: #fff; color: #777; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .period-btn:hover { border-color: #bd93f9; color: #bd93f9; }
+        .period-btn.active { background: linear-gradient(135deg, #bd93f9, #a6c1ee); color: #fff; border-color: transparent; }
+        .date-input { padding: 10px 12px; border: 1.5px solid #ebebeb; border-radius: 10px; font-size: 13px; color: #555; outline: none; }
+        .date-input:focus { border-color: #bd93f9; }
+        .btn-search { padding: 10px 24px; background: linear-gradient(135deg, #bd93f9, #a6c1ee); color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .btn-reset { padding: 10px 18px; border: 1.5px solid #ebebeb; border-radius: 10px; background: #fff; color: #aaa; font-size: 13px; text-decoration: none; }
+        .btn-reset:hover { border-color: #bd93f9; color: #bd93f9; }
+        .top-section { display: grid; grid-template-columns: 320px 1fr; gap: 16px; margin-bottom: 36px; align-items: start; }
+        .panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .panel-header { padding: 14px 20px; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #bd93f9, #a6c1ee); display: flex; justify-content: space-between; align-items: center; }
+        .panel-badge { background: rgba(255,255,255,0.2); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+        .pending-list { max-height: 460px; overflow-y: auto; }
+        .pending-item { padding: 14px 18px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 12px; }
+        .pending-item:hover { background: #f7f7f7; }
+        .pending-item.active { background: #f5f0ff; border-left: 4px solid #bd93f9; }
+        .pending-item:last-child { border-bottom: none; }
+        .pending-thumb { width: 42px; height: 42px; border-radius: 8px; flex-shrink: 0; background: linear-gradient(135deg, #f5f0ff, #ede9fe); overflow: hidden; }
+        .pending-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .pending-info { flex: 1; min-width: 0; }
+        .pending-name { font-size: 13px; font-weight: 700; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pending-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+        .pending-price { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: #333; flex-shrink: 0; }
+        .list-empty { padding: 40px 20px; text-align: center; color: #ccc; font-size: 13px; }
+        .detail-panel { background: #fff; border: 1px solid #e0e0e0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .detail-empty-msg { padding: 80px 24px; text-align: center; color: #ccc; font-size: 14px; }
+        .detail-body { padding: 22px 26px; }
+        .detail-img { width: 100%; height: 180px; background: linear-gradient(135deg, #f5f0ff, #ede9fe); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+        .detail-img img { width: 100%; height: 100%; object-fit: cover; }
+        .detail-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 9px 0; border-bottom: 1px solid #f5f5f5; }
+        .detail-row:last-of-type { border-bottom: none; }
+        .detail-label { color: #aaa; }
+        .detail-value { font-weight: 600; color: #333; }
+        .detail-footer { padding: 16px 26px; background: #f9f9f9; border-top: 1px solid #f0f0f0; }
+        .detail-amount { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900; margin-bottom: 14px; color: #222; text-align: right; }
+        .detail-btns { display: flex; gap: 10px; justify-content: flex-end; }
+        .section-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+        .section-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 900; color: #222; }
+        .section-sub { font-size: 13px; color: #aaa; }
+        .order-row { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 22px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); transition: box-shadow 0.2s; cursor: pointer; }
+        .order-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+        .order-thumb { width: 50px; height: 50px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, #f5f0ff, #ede9fe); overflow: hidden; }
+        .order-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .order-info { flex: 1; min-width: 0; }
+        .order-name { font-size: 14px; font-weight: 700; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .order-sub { font-size: 12px; color: #aaa; margin-top: 3px; }
+        .order-amount { font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 900; color: #333; flex-shrink: 0; min-width: 80px; text-align: right; }
+        .status-badge { font-size: 13px; font-weight: 700; padding: 7px 18px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; }
+        .status-checking { background: #fef3e2; color: #e67e22; border: 1px solid #fad7a0; }
+        .status-ready    { background: #eaf4fb; color: #2e86c1; border: 1px solid #aed6f1; }
+        .status-ing      { background: #e8f0fe; color: #4285f4; border: 1px solid #c5d8fd; }
+        .status-done     { background: #f0f0f0; color: #888;    border: 1px solid #e0e0e0; }
+        .status-cancel   { background: #fff5f5; color: #ff6b6b; border: 1px solid #ffc2c2; }
+        .delivery-badge { font-size: 13px; font-weight: 700; padding: 7px 18px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; }
+        .delivery-checking { background: #fef3e2; color: #e67e22; border: 1px solid #fad7a0; }
+        .delivery-ready    { background: #eaf4fb; color: #2e86c1; border: 1px solid #aed6f1; }
+        .delivery-ing      { background: #e8f0fe; color: #4285f4; border: 1px solid #c5d8fd; }
+        .delivery-done     { background: #f0f0f0; color: #888;    border: 1px solid #e0e0e0; }
+        .delivery-cancel   { background: #fff5f5; color: #ff6b6b; border: 1px solid #ffc2c2; }
+        .order-btns { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+        .btn { padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 20px; cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-purple { color: #fff; background: linear-gradient(135deg, #bd93f9, #a6c1ee); box-shadow: 0 2px 8px rgba(189,147,249,0.3); padding: 10px 24px; font-size: 14px; }
+        .btn-purple:hover { transform: translateY(-1px); color: #fff; }
+        .btn-red { color: #fff; background: #f43f6e; box-shadow: 0 2px 8px rgba(244,63,110,0.3); padding: 10px 24px; font-size: 14px; }
+        .btn-red:hover { transform: translateY(-1px); color: #fff; background: #e11d48; }
+        .btn-blue { color: #fff; background: linear-gradient(135deg, #bd93f9, #a6c1ee); box-shadow: 0 2px 8px rgba(189,147,249,0.3); }
+        .btn-blue:hover { transform: translateY(-1px); color: #fff; }
+        .btn-green { color: #fff; background: linear-gradient(135deg, #6dca8a, #a8e6cf); box-shadow: 0 2px 8px rgba(109,202,138,0.3); }
+        .btn-green:hover { transform: translateY(-1px); color: #fff; }
+        .accept-badge { font-size: 13px; font-weight: 700; padding: 7px 18px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; }
+        .accept-accepted { background: #eefbf3; color: #2ecc71; border: 1px solid #a7f3d0; }
+        .accept-rejected { background: #fff5f5; color: #ff6b6b; border: 1px solid #ffc2c2; }
+        .order-row.rejected { opacity: 0.6; }
+        .page-btn { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid #e0e0e0; background: #fff; font-size: 13px; font-weight: 600; color: #888; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+        .page-btn:hover { border-color: #bd93f9; color: #bd93f9; }
+        .page-btn.active { background: linear-gradient(135deg, #bd93f9, #a6c1ee); border-color: transparent; color: #fff; }
+        .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #fff; border-radius: 24px; padding: 36px 32px; width: 420px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.22); position: relative; }
+        .modal-close { position: absolute; top: 16px; right: 20px; border: none; background: none; font-size: 22px; color: #ccc; cursor: pointer; }
+        .modal-title { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 900; color: #222; margin-bottom: 4px; }
+        .modal-subtitle { font-size: 13px; color: #aaa; margin-bottom: 28px; }
+        .delivery-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+        .delivery-option { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 12px; border: 2px solid #e8e8e8; cursor: pointer; transition: all 0.2s; }
+        .delivery-option:hover { border-color: #bd93f9; }
+        .delivery-option.selected { border-color: #bd93f9; background: #faf5ff; }
+        .delivery-option-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #e0e0e0; flex-shrink: 0; transition: all 0.2s; }
+        .delivery-option.selected .delivery-option-dot { border-color: #bd93f9; background: #bd93f9; }
+        .delivery-option-label { font-size: 14px; font-weight: 700; flex: 1; }
+        .delivery-option-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+        .opt-checking .delivery-option-badge { background: #fef3e2; color: #e67e22; border: 1px solid #fad7a0; }
+        .opt-ready    .delivery-option-badge { background: #eaf4fb; color: #2e86c1; border: 1px solid #aed6f1; }
+        .opt-ing      .delivery-option-badge { background: #e8f0fe; color: #4285f4; border: 1px solid #c5d8fd; }
+        .opt-done     .delivery-option-badge { background: #f0f0f0; color: #888;    border: 1px solid #e0e0e0; }
+        .btn-confirm { width: 100%; padding: 16px; font-size: 15px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #bd93f9, #a6c1ee); border: none; border-radius: 14px; cursor: pointer; }
+        .btn-confirm:hover { transform: translateY(-2px); }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 24px; }
+        .order-row.rejected { background: #f5f5f5; opacity: 0.7; }
+        .order-row.rejected:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+        .unread-badge {
+		    position: absolute;
+		    top: -6px;
+		    right: -6px;
+		    background: #ff4444;
+		    color: #fff;
+		    border-radius: 50%;
+		    width: 18px;
+		    height: 18px;
+		    font-size: 10px;
+		    font-weight: 700;
+		    display: none;
+		    align-items: center;
+		    justify-content: center;
+		    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+		    text-align: center;
+		    line-height: 18px;
+		}
+		.unread-badge.show {
+		    display: inline-flex;
+		}
+    </style>
+</head>
+<body>
+<th:block layout:fragment="content">
+<div class="wrapper">
+
+    <div class="top-bar">
+        <span class="top-bar-title">판매관리(Admin)</span>
+    </div>
+
+    <div class="search-box">
+        <form th:action="@{/customer/admin/order/history}" method="get">
+            <div class="search-row">
+                <input type="text" name="keyword" class="search-input"
+                       th:value="${search.keyword}"
+                       placeholder="고객 닉네임, 상품명, 주문번호로 검색">
+                <button type="submit" class="btn-search">검색</button>
+            </div>
+            <div class="search-row">
+                <span style="font-size:13px; color:#aaa; font-weight:600;">빠른 선택</span>
+                <button type="submit" name="period" value="1w" class="period-btn" th:classappend="${search.period == '1w'} ? ' active'">1주일</button>
+                <button type="submit" name="period" value="1m" class="period-btn" th:classappend="${search.period == '1m'} ? ' active'">1개월</button>
+                <button type="submit" name="period" value="3m" class="period-btn" th:classappend="${search.period == '3m'} ? ' active'">3개월</button>
+            </div>
+            <div class="search-row">
+                <span style="font-size:13px; color:#aaa; font-weight:600;">직접 입력</span>
+                <input type="date" name="startDate" class="date-input" th:value="${search.startDate}">
+                <span style="color:#aaa;">~</span>
+                <input type="date" name="endDate" class="date-input" th:value="${search.endDate}">
+                <button type="submit" class="btn-search">검색</button>
+                <a href="/customer/admin/order/history" class="btn-reset">초기화</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="top-section">
+        <!-- 왼쪽: 새 주문 -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>새로 들어온 주문</span>
+                <span class="panel-badge" th:text="${#lists.size(pendingOrders)} + '건'">0건</span>
+            </div>
+            <div class="pending-list">
+                <div class="list-empty" th:if="${#lists.isEmpty(pendingOrders)}">새로운 주문이 없습니다.</div>
+                <div th:each="order : ${pendingOrders}"
+                     class="pending-item"
+                     th:attr="data-order-id=${order.orderId}"
+                     th:onclick="'selectOrder(' + ${order.orderId} + ')'">
+                    <div class="pending-thumb">
+                        <img th:if="${order.items != null and !#lists.isEmpty(order.items) and order.items[0].imageUrl != null}" th:src="${order.items[0].imageUrl}">
+                        <div th:if="${order.items == null or #lists.isEmpty(order.items) or order.items[0].imageUrl == null}"
+                             style="width:100%;height:100%;background:linear-gradient(135deg,#f5f0ff,#ede9fe);border-radius:8px;"></div>
+                    </div>
+                    <div class="pending-info">
+                        <div class="pending-name" th:text="${order.customerNickname} + ' 님의 주문'"></div>
+                        <div class="pending-sub"
+                             th:if="${order.items != null and !#lists.isEmpty(order.items)}"
+                             th:text="${order.items[0].productName} + (${#lists.size(order.items)} > 1 ? ' 외 ' + (${#lists.size(order.items)} - 1) + '건' : '')">
+                        </div>
+                        <div class="pending-sub" th:if="${order.items == null or #lists.isEmpty(order.items)}">상품 정보 없음</div>
+                        <div class="pending-sub" th:if="${order.businessNickname != null}" style="color:#bd93f9;" th:text="'판매자: ' + ${order.businessNickname}"></div>
+                    </div>
+                    <div class="pending-price" th:text="${#numbers.formatInteger(order.totalAmount, 3, 'COMMA') + '원'}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 오른쪽: 상세 -->
+        <div class="detail-panel">
+            <div class="panel-header"><span>Order 상세</span></div>
+            <div id="detailEmpty" class="detail-empty-msg">왼쪽 목록에서 주문을 선택하세요.</div>
+            <div id="detailBody" class="detail-body" style="display:none;">
+                <div class="detail-img" id="detailImg"></div>
+                <div class="detail-row"><span class="detail-label">주문번호</span><span class="detail-value" id="dOrderNo">-</span></div>
+                <div class="detail-row"><span class="detail-label">고객명</span><span class="detail-value" id="dCustomer">-</span></div>
+                <div class="detail-row"><span class="detail-label">상품명</span><span class="detail-value" id="dProduct">-</span></div>
+                <div class="detail-row"><span class="detail-label">수량</span><span class="detail-value" id="dQty">-</span></div>
+                <div class="detail-row"><span class="detail-label">결제일시</span><span class="detail-value" id="dDate">-</span></div>
+                <div class="detail-row"><span class="detail-label">거래유형</span><span class="detail-value" id="dType">-</span></div>
+                <div class="detail-row"><span class="detail-label">구매자 희망 완료일</span><span class="detail-value" id="dExpectedDueDate">-</span></div>
+                <div class="detail-row"><span class="detail-label">판매자 예상 완료일</span><span class="detail-value" id="dDueDate">-</span></div>
+            </div>
+            <div id="detailFooter" class="detail-footer" style="display:none;">
+                <div class="detail-amount" id="dAmount">0원</div>
+                <div class="detail-btns">
+                    <button class="btn btn-purple" onclick="acceptOrder()">수락</button>
+                    <button class="btn btn-red"    onclick="rejectOrder()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 수락된 주문 목록 -->
+    <div class="section-header">
+        <span class="section-title">Order List</span>
+        <span class="section-sub">수락한 판매내역</span>
+    </div>
+
+    <div th:if="${#lists.isEmpty(orders)}" style="text-align:center; padding:40px; color:#ccc; font-size:14px;">
+        수락한 주문이 없습니다.
+    </div>
+
+    <!-- ✅ data-room-id 추가 -->
+    <div th:each="order : ${orders}"
+         th:class="${order.acceptStatus == 'REJECTED' or order.deliveryStatus == 9} ? 'order-row rejected' : 'order-row'"
+         th:data-room-id="${order.roomId}"
+         th:onclick="'location.href=\'/customer/admin/order/detail/' + ${order.orderId} + '\''">
+        <div class="order-thumb">
+            <img th:if="${order.items != null and !#lists.isEmpty(order.items) and order.items[0].imageUrl != null}" th:src="${order.items[0].imageUrl}">
+        </div>
+        <div class="order-info">
+            <div class="order-name"
+                 th:if="${order.items != null and !#lists.isEmpty(order.items)}"
+                 th:text="${order.items[0].productName} + (${#lists.size(order.items)} > 1 ? ' 외 ' + (${#lists.size(order.items)} - 1) + '건' : '')">
+            </div>
+            <div class="order-name" th:if="${order.items == null or #lists.isEmpty(order.items)}">주문</div>
+            <div class="order-sub"
+                 th:text="'주문번호: ' + ${order.orderNo} + ' · ' + ${order.customerNickname} + ' · ' + ${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')} + (${order.businessNickname != null} ? ' · 판매자: ' + ${order.businessNickname} : '')">
+            </div>
+        </div>
+        <div class="order-amount" th:text="${#numbers.formatInteger(order.totalAmount, 3, 'COMMA') + '원'}"></div>
+
+        <span class="delivery-badge delivery-checking" th:if="${order.deliveryStatus == 1}">결제확인중</span>
+        <span class="delivery-badge delivery-ready"    th:if="${order.deliveryStatus == 2}">배송준비</span>
+        <span class="delivery-badge delivery-ing"      th:if="${order.deliveryStatus == 3}">배송중</span>
+        <span class="delivery-badge delivery-done"     th:if="${order.deliveryStatus == 4}">배송완료</span>
+        <span class="delivery-badge delivery-cancel"   th:if="${order.deliveryStatus == 9}">취소</span>
+
+        <div class="order-btns">
+            <button class="btn btn-blue"
+                    th:if="${order.acceptStatus != 'REJECTED' and order.bidId == null}"
+                    th:attr="data-order-id=${order.orderId},data-delivery-status=${order.deliveryStatus}"
+                    onclick="openDeliveryModal(event, this)">배송 관리</button>
+            <!-- ✅ data-room-id wrapper + unread-badge class 추가 -->
+            <div th:if="${order.roomId != null}"
+                 th:data-room-id="${order.roomId}"
+                 style="position:relative; display:inline-flex;">
+                <a class="btn btn-green"
+                   th:href="@{/chat(roomId=${order.roomId})}"
+                   onclick="event.stopPropagation()">채팅 보기</a>
+                <span class="unread-badge"
+					th:classappend="${order.unreadCount > 0} ? ' show'"
+					th:text="${order.unreadCount > 0} ? (${order.unreadCount > 99} ? '99+' : ${order.unreadCount}) : ''">
+				</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 페이징 -->
+    <div class="pagination" th:if="${totalPages > 1}">
+        <a class="page-btn" th:classappend="${currentPage == 1} ? 'disabled'"
+           th:href="@{/customer/admin/order/history(page=${currentPage - 1},keyword=${search.keyword},startDate=${search.startDate},endDate=${search.endDate},period=${search.period})}">&lsaquo;</a>
+        <a th:each="i : ${#numbers.sequence(1, totalPages)}"
+           class="page-btn" th:classappend="${i == currentPage} ? 'active'"
+           th:href="@{/customer/admin/order/history(page=${i},keyword=${search.keyword},startDate=${search.startDate},endDate=${search.endDate},period=${search.period})}"
+           th:text="${i}">1</a>
+        <a class="page-btn" th:classappend="${currentPage == totalPages} ? 'disabled'"
+           th:href="@{/customer/admin/order/history(page=${currentPage + 1},keyword=${search.keyword},startDate=${search.startDate},endDate=${search.endDate},period=${search.period})}">&rsaquo;</a>
+    </div>
+
+</div>
+
+<!-- 배송 관리 모달 -->
+<div class="modal-overlay" id="deliveryModalOverlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeDeliveryModal()">&times;</button>
+        <div class="modal-title">배송 관리</div>
+        <div class="modal-subtitle">변경할 배송 상태를 선택하세요.</div>
+        <div class="delivery-options">
+            <div class="delivery-option opt-checking" data-value="1" onclick="selectDeliveryOption(this)">
+                <div class="delivery-option-dot"></div>
+                <span class="delivery-option-label">결제확인중</span>
+                <span class="delivery-option-badge">결제확인중</span>
+            </div>
+            <div class="delivery-option opt-ready" data-value="2" onclick="selectDeliveryOption(this)">
+                <div class="delivery-option-dot"></div>
+                <span class="delivery-option-label">배송준비</span>
+                <span class="delivery-option-badge">배송준비</span>
+            </div>
+            <div class="delivery-option opt-ing" data-value="3" onclick="selectDeliveryOption(this)">
+                <div class="delivery-option-dot"></div>
+                <span class="delivery-option-label">배송중</span>
+                <span class="delivery-option-badge">배송중</span>
+            </div>
+            <div class="delivery-option opt-done" data-value="4" onclick="selectDeliveryOption(this)">
+                <div class="delivery-option-dot"></div>
+                <span class="delivery-option-label">배송완료</span>
+                <span class="delivery-option-badge">배송완료</span>
+            </div>
+        </div>
+        <button class="btn-confirm" onclick="confirmDelivery()">변경 저장</button>
+    </div>
+</div>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+    var pendingOrders    = /*[[${pendingOrders}]]*/ [];
+    var _selected        = null;
+    var _deliveryOrderId = null;
+    var _selectedStatus  = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (pendingOrders && pendingOrders.length > 0) selectOrder(pendingOrders[0].orderId);
+        document.getElementById('deliveryModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeDeliveryModal();
+        });
+    });
+
+    function selectOrder(orderId) {
+        _selected = pendingOrders.find(function(o) { return o.orderId == orderId; });
+        if (!_selected) return;
+        document.querySelectorAll('.pending-item').forEach(function(el) {
+            el.classList.toggle('active', el.dataset.orderId == orderId);
+        });
+        var o = _selected; var items = o.items || []; var first = items[0] || {};
+        var imgEl = document.getElementById('detailImg');
+        imgEl.innerHTML = first.imageUrl ? '<img src="' + first.imageUrl + '" style="width:100%;height:100%;object-fit:cover;">' : '';
+        document.getElementById('dOrderNo').textContent  = o.orderNo          || '-';
+        document.getElementById('dCustomer').textContent = o.customerNickname || '-';
+        var productHtml = items.map(function(it) {
+            return '<div style="display:flex; justify-content:space-between; padding:4px 0; font-size:13px; border-bottom:1px solid #f5f5f5;">'
+                 + '<span style="color:#444;">' + it.productName + '</span>'
+                 + '<span style="color:#222; font-weight:600; margin-left:12px;">' + it.quantity + '개</span></div>';
+        }).join('');
+        document.getElementById('dProduct').innerHTML = productHtml || '-';
+        var totalQty = items.reduce(function(sum, it) { return sum + (it.quantity || 0); }, 0);
+        document.getElementById('dQty').textContent    = totalQty ? totalQty + '개' : '-';
+        document.getElementById('dDate').textContent   = o.createdAt ? o.createdAt.substring(0,16).replace('T',' ') : '-';
+        document.getElementById('dType').textContent   = o.bidId ? '개인거래' : 'Kit 구매';
+        document.getElementById('dAmount').textContent = Number(o.totalAmount).toLocaleString('ko-KR') + '원';
+        document.getElementById('detailEmpty').style.display  = 'none';
+        document.getElementById('detailBody').style.display   = '';
+        document.getElementById('detailFooter').style.display = '';
+    }
+
+    function openDeliveryModal(event, btn) {
+        event.stopPropagation();
+        _deliveryOrderId = btn.dataset.orderId;
+        _selectedStatus  = parseInt(btn.dataset.deliveryStatus);
+        document.querySelectorAll('.delivery-option').forEach(function(el) {
+            el.classList.toggle('selected', parseInt(el.dataset.value) === _selectedStatus);
+        });
+        document.getElementById('deliveryModalOverlay').classList.add('show');
+    }
+
+    function closeDeliveryModal() {
+        document.getElementById('deliveryModalOverlay').classList.remove('show');
+    }
+
+    function selectDeliveryOption(el) {
+        document.querySelectorAll('.delivery-option').forEach(function(opt) { opt.classList.remove('selected'); });
+        el.classList.add('selected');
+        _selectedStatus = parseInt(el.dataset.value);
+    }
+
+    function confirmDelivery() {
+        if (!_deliveryOrderId || _selectedStatus === null) return;
+        fetch('/customer/admin/order/delivery/' + _deliveryOrderId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deliveryStatus: _selectedStatus })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) { closeDeliveryModal(); location.reload(); }
+            else alert(data.message || '처리에 실패했습니다.');
+        })
+        .catch(function() { alert('오류가 발생했습니다.'); });
+    }
+
+    function acceptOrder() {
+        if (!_selected) return;
+        if (!confirm(_selected.customerNickname + ' 님의 주문을 수락하시겠습니까?')) return;
+        fetch('/customer/admin/order/accept/' + _selected.orderId, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) { alert('주문을 수락했습니다.'); location.reload(); }
+            else alert(data.message || '처리에 실패했습니다.');
+        })
+        .catch(function() { alert('오류가 발생했습니다.'); });
+    }
+
+    function rejectOrder() {
+        if (!_selected) return;
+        if (!confirm(_selected.customerNickname + ' 님의 주문을 취소하시겠습니까?')) return;
+        fetch('/customer/admin/order/reject/' + _selected.orderId, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) { alert('주문을 취소했습니다.'); location.reload(); }
+            else alert(data.message || '처리에 실패했습니다.');
+        })
+        .catch(function() { alert('오류가 발생했습니다.'); });
+    }
+/*]]>*/
+</script>
+
+</th:block>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nextage.web.mapper.BusinessMapper">
+
+  <select id="findByLoginId" resultType="com.nextage.web.domain.BusinessDTO">
+    SELECT 
+            business_id AS businessId,
+            login_id AS loginId,
+            company_name AS companyName,
+            password_hash AS passwordHash,
+            phone_number AS phoneNumber,
+            role,
+            status,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+        FROM business 
+        WHERE login_id = #{loginId}
+    </select>
+<insert id="insertBusiness">
+        INSERT INTO business (
+            login_id, company_name, password_hash, phone_number, role, status
+        ) VALUES(
+            #{loginId}, #{companyName}, #{passwordHash}, #{phoneNumber}, #{role},#{status}
+        )
+    </insert>
+	 
+	 <select id="countByLoginId" resultType="int">
+        SELECT COUNT(*) FROM business WHERE login_id = #{loginId}
+    </select>
+    	 <select id="countByPhoneNumber" resultType="int">
+        SELECT COUNT(*) FROM business WHERE phone_number = #{phoneNumber}
+    </select>	
+    	 <select id="countByCompanyName" resultType="int">
+        SELECT COUNT(*) FROM business WHERE company_name = #{companyName}
+    </select>
+    
+    <update id="updateBusiness">
+        UPDATE business 
+        SET 
+            company_name = #{companyName},
+            phone_number = #{phoneNumber},
+            updated_at = NOW()
+            <if test="passwordHash != null and passwordHash != ''">
+                , password_hash = #{passwordHash}
+            </if>
+        WHERE login_id = #{loginId}
+    </update>
+    
+    <update id="updateRoleToNull" parameterType="String">
+	    UPDATE business
+	    SET status = NULL
+	    WHERE login_id = #{loginId}
+	</update>
+    
+</mapper>

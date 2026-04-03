@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="${isMine ? 'layouts/business-layout' : 'layouts/customer-layout'}">
+<head>
+    <meta charset="UTF-8">
+    <title>Nextage Portfolio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
+    <link rel="stylesheet" th:href="@{/css/portfolio/portfolio.css}" />
+    <style>
+        .slick-dots { bottom: -30px !important; }
+        .modal-slider { margin-bottom: 30px !important; }
+        .is-hidden { opacity: 0.6; filter: grayscale(50%); }
+        .slick-prev, .slick-next { display: none !important; }
+        .square-img { width: 100% !important; aspect-ratio: 1/1 !important; object-fit: cover !important; border-radius: 20px !important; }
+        .empty-text { color: #bbb; font-style: italic; }
+        .work-period { font-size: 13px; color: #888; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<th:block layout:fragment="content">
+    <div class="portfolio-content">
+        <div class="top-row">
+           <div class="profile-section">
+           <!-- 이미지 -->
+		    <h2 class="section-title">프로필</h2>
+		    <div class="profile-image-container">
+			    <img th:src="${(bizinfo != null && bizinfo.profileImage != null) ? bizinfo.profileImage : '/images/default-profile.png'}" 
+			         alt="프로필"
+			         class="square-img">
+			</div>
+		    <div class="profile-btns" th:if="${isMine}">
+		    <input type="file" id="profileInput" style="display: none;" accept="image/*" onchange="uploadProfileImage(this)">
+			    <button type="button"
+			            class="btn-modify" onclick="document.getElementById('profileInput').click()"
+			            th:text="${bizinfo?.profileImage != null ? '프로필 수정' : '프로필 추가'}">
+			    </button>
+			    <button type="button"
+			            class="btn-delete"
+			            style="background: #333; color: #fff;"
+			            th:if="${bizinfo?.profileImage != null}" onclick="deleteItem('profile')">
+			        프로필 삭제
+			    </button>
+			</div>
+		    <!--  customer는 이름으로 보이게-->
+		    <div class="company-name-box" th:if="${!isMine}">
+			    <strong th:text="${bizinfo?.companyName}">넥스테이지 수선소</strong>
+			</div>
+		</div>
+			<!-- 위치 -->
+            <div class="info-section">
+                <div class="location-group">
+                    <h2 class="section-title">위치</h2>
+                    <div class="info-box">
+                        <span th:text="${bizinfo?.location != null ? bizinfo.location : '등록된 위치 정보가 없습니다.'}"
+                              th:classappend="${bizinfo?.location == null ? 'empty-text' : ''}"></span>
+                        <div class="box-actions" th:if="${isMine}">
+                            <button type="button" th:text="${bizinfo?.location != null ? '수정' : '추가'}"  onclick="editLocation(this)"></button>
+                            <button type="button" onclick="deleteItem('location')">삭제</button>
+                        </div>
+                    </div>
+                </div>
+				<!-- 경력 -->
+                <div class="career-group">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+                        <h2 class="section-title" style="margin-bottom: 0;">경력</h2>
+                        <button type="button" class="btn-add-career" th:if="${isMine and #lists.size(careerList) < 3}">+ 경력 추가</button>
+                    </div>
+                    <div class="career-container">
+                        <div class="info-box career-item" th:each="career : ${careerList}">
+                            <span th:text="${career.workDescription}"></span>
+                            <div class="box-actions" th:if="${isMine}">
+                                <button type="button"  th:onclick="|editCareer(this, ${career.careerId})|">수정</button>
+                                <button type="button" th:onclick="|deleteItem('career', ${career.careerId})|">삭제</button>
+                            </div>
+                        </div>
+                        <div class="info-box empty-box" th:if="${#lists.isEmpty(careerList)}">
+                            <span class="empty-text">등록된 경력 사항이 없습니다.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+		<!-- review뜨는 부분 -->
+        <div class="work-section">
+		    <h2 class="section-title">작업 포트폴리오</h2>
+		
+		    <!-- 포트폴리오 있음 -->
+		    <div class="work-grid" th:if="${!#lists.isEmpty(reviewList)}">
+		        <th:block th:each="review : ${reviewList}">
+		            <div class="work-card" 
+		                 th:if="${isMine or review.status == 'ACTIVE'}"
+		                 th:classappend="${review.status == 'HIDDEN' ? 'is-hidden' : ''}"
+		                 data-bs-toggle="modal" data-bs-target="#workModal" 
+		                 th:onclick="fillModal(this)"
+		                 th:data-id="${review.reviewId}"
+		                 th:data-status="${review.status}"
+		                 th:data-review-id="${review.reviewId}">
+		                 
+		                <div class="card-img-holder">
+		                    <img th:src="${review.image1}">
+		                </div>
+		
+		                <div class="card-footer">
+		                    <div class="footer-top">
+		                        <p class="order-num" th:text="'No. ' + ${review.orderNo}"></p>
+		                        <h3 class="card-text" th:text="${review.requestTitle}"></h3>
+		                    </div>
+		
+		                    <div class="footer-bottom">
+		                        <p class="work-period">
+		                            <span th:text="${#temporals.format(review.startDate, 'yyyy.MM.dd')}"></span> ~ 
+		                            <span th:text="${#temporals.format(review.endDate, 'yyyy.MM.dd')}"></span>
+		                        </p>
+		                    </div>
+		                </div>
+		
+		                <input type="hidden" class="h-content" th:value="${review.content}">
+		                <input type="hidden" class="h-img2" th:value="${review.image2}">
+		                <input type="hidden" class="h-img3" th:value="${review.image3}">
+		            </div>
+		        </th:block>
+		    </div>
+			<!-- 페이지네이샨 -->
+			<!-- 수정 후 -->
+				<div class="pagination-box" th:if="${!#lists.isEmpty(reviewList) and totalPages > 0}">
+			    
+			    <a th:if="${startPage > 0}"
+			       th:href="${isMine} ? @{/business/my-portfolio(page=${startPage - 1})} 
+			                          : @{/business/portfolio/{id}(id=${bizinfo.businessId}, page=${startPage - 1})}"
+			       class="page-btn nav-btn">
+			       <i class="bi bi-caret-left"></i>
+			    </a>
+			
+			    <th:block th:each="num : ${#numbers.sequence(startPage, endPage)}">
+			        <a th:href="${isMine} ? @{/business/my-portfolio(page=${num})} 
+			                              : @{/business/portfolio/{id}(id=${bizinfo.businessId}, page=${num})}"
+			           class="page-btn"
+			           th:classappend="${num == page} ? 'active' : ''"
+			           th:text="${num + 1}">
+			        </a>
+			    </th:block>
+			
+			    <a th:if="${endPage < totalPages - 1}"
+			       th:href="${isMine} ? @{/business/my-portfolio(page=${endPage + 1})} 
+			                          : @{/business/portfolio/{id}(id=${bizinfo.businessId}, page=${endPage + 1})}"
+			       class="page-btn nav-btn">
+			       <i class="bi bi-caret-right"></i>
+			    </a>
+			</div>
+		    <!-- 포트폴리오 없음 -->
+		    <div class="empty-portfolio-box" th:if="${#lists.isEmpty(reviewList)}">
+		
+		        <!-- 고객 -->
+		        <div th:if="${!isMine}" class="empty-text-box">
+		            아직 포트폴리오가 없습니다!
+		        </div>
+		
+		        <!-- 본인 -->
+		        <div th:if="${isMine}" class="empty-text-box">
+		            <p>아직 포트폴리오가 없네요!</p>
+		            <p style="margin-bottom:20px;">"제안"하러 갈까요?</p>
+		
+		            <a th:href="@{/business/request/list}" class="btn-go-list">
+		                리스트 보러가기
+		            </a>
+		        </div>
+		
+		    </div>
+		
+		</div>
+		<!--  모달 -->
+        <div class="modal fade" id="workModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content" style="border-radius: 35px; border: none;">
+                    <div class="modal-header" style="padding: 35px 40px 20px; border: none; position: relative;">
+                        <h1 class="modal-title" id="modalTitle" style="text-align: center; width: 100%; font-size: 20px;">작업물 상세</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; right: 30px;"></button>
+                    </div>
+                    <div class="modal-body" style="padding: 0 40px 40px;">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="modal-slider">
+								    <div class="slide-item"><img id="mImg1" src="" class="square-img"></div>
+								    <div class="slide-item"><img id="mImg2" src="" class="square-img"></div>
+								    <div class="slide-item"><img id="mImg3" src="" class="square-img"></div>
+								</div>
+                            </div>
+                            <div class="col-md-6 d-flex flex-column" style="justify-content: space-between;">
+                                <div class="modal-info-content">
+                                    <p id="mOrderNum" style="color:#999; font-size:12px; margin-bottom: 2px;"></p>
+                                    <p id="mPeriod" style="color:#888; font-size:13px; margin-bottom:15px;"></p>
+                                    <h5 class="detail-label" style="font-weight: 600; margin-bottom: 8px;">작업 및 후기 내용</h5>
+                                    <p id="mReview" class="detail-text" style="white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 12px;"></p>
+                                </div>
+                                <div class="modal-actions" th:if="${isMine}" style="margin-top: 30px; display: flex; justify-content: flex-end;">
+                                    <button type="button" id="btnToggleStatus" onclick="toggleStatus()" style="padding: 10px 20px; border-radius: 12px; border: 1px solid #ddd; background: #fff; font-weight: 500;"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+    <script th:src="@{/js/portfolio/portfolio.js}"></script>
+    <script th:if="${hiddenAlert}">
+	    window.onload = function() {
+	        setTimeout(function() {
+	            alert('해당 게시물은 비공개 처리된 게시물입니다.');
+	        }, 800);
+	    };
+	</script>
+</th:block>
+</body>
+</html>

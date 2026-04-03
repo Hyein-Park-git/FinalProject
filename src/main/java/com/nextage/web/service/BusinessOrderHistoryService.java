@@ -1,0 +1,192 @@
+package com.nextage.web.service;
+
+import com.nextage.web.domain.OrderHistoryDTO;
+import com.nextage.web.domain.OrderSearchDTO;
+import com.nextage.web.domain.ScheduleOrderDTO;
+import com.nextage.web.mapper.BusinessOrderHistoryMapper;
+import com.nextage.web.mapper.BusinessSettlementMapper;
+import com.nextage.web.mapper.CustomerRequestMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class BusinessOrderHistoryService {
+    private final BusinessOrderHistoryMapper mapper;
+    private static final int PAGE_SIZE = 6;
+    private final CustomerRequestMapper requestMapper;
+    private final BusinessSettlementMapper settlementMapper;
+    private final BidService bidService;
+    private final CustomerPaymentService customerPaymentService;
+
+    @Transactional(readOnly = true)
+    public List<OrderHistoryDTO> getPendingOrders(Long businessId, String role) {
+        List<OrderHistoryDTO> orders;
+        if ("BADMIN".equals(role)) {
+            orders = mapper.selectPendingOrdersAll();
+        } else {
+            orders = mapper.selectPendingOrders(businessId);
+        }
+        orders.forEach(o -> o.setItems(mapper.selectOrderItems(o.getOrderId())));
+        return orders;
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderHistoryDTO> getAcceptedOrders(Long businessId, String role, OrderSearchDTO search, int page) {
+        int offset = (page - 1) * PAGE_SIZE;
+        List<OrderHistoryDTO> orders;
+        if ("BADMIN".equals(role)) {
+            orders = mapper.selectAllOrdersForAdmin(search, offset, PAGE_SIZE);
+        } else {
+            orders = mapper.selectAcceptedOrders(businessId, search, offset, PAGE_SIZE);
+        }
+        orders.forEach(o -> {
+            o.setItems(mapper.selectOrderItems(o.getOrderId()));
+            // ✅ unread count 세팅
+            if (o.getRoomId() != null && !"REJECTED".equals(o.getAcceptStatus())) {
+                o.setUnreadCount(mapper.selectUnreadCount(o.getRoomId()));
+            }
+        });
+        return orders;
+    }
+
+    @Transactional(readOnly = true)
+    public int getTotalPages(Long businessId, String role, OrderSearchDTO search) {
+        int total;
+        if ("BADMIN".equals(role)) {
+            total = mapper.countAllOrdersForAdmin(search);
+        } else {
+            total = mapper.countAcceptedOrders(businessId, search);
+        }
+        return (int) Math.ceil((double) total / PAGE_SIZE);
+    }
+
+    // 수정
+    @Transactional
+    public void acceptOrder(Long orderId) {
+        mapper.updateAcceptStatus(orderId, "ACCEPTED");
+        log.info("주문 수락 - orderId: {}", orderId);
+
+        OrderHistoryDTO order = mapper.selectOrderDetail(orderId);
+
+        if (order.getBidId() != null) {
+            // request status → SELECTED
+            Long requestId = mapper.selectRequestIdByBidId(order.getBidId());
+            requestMapper.updateStatus(requestId, "SELECTED");
+
+            if (order.getRoomId() == null) {
+                mapper.insertChatRoom(
+                    order.getBidId(),
+                    order.getCustomerId(),
+                    order.getBusinessId()
+                );
+                Long roomId = mapper.selectRoomIdByBidId(
+                    order.getBidId(),
+                    order.getCustomerId(),
+                    order.getBusinessId()
+                );
+                int exists = mapper.selectChatFunctionExists(roomId);
+                if (exists == 0) {
+                    mapper.insertChatFunction(roomId, order.getBusinessId(), order.getCustomerId());
+                }
+                log.info("채팅방 생성 - roomId: {}, bidId: {}", roomId, order.getBidId());
+            }
+        }
+    }
+
+    @Transactional
+    public void rejectOrder(Long orderId) {
+        mapper.updateAcceptStatus(orderId, "REJECTED");
+        mapper.updateDeliveryStatus(orderId, 9);
+        mapper.updatePaymentStatus(orderId, "CANCELLED");
+        log.info("주문 거절 - orderId: {}", orderId);
+
+        // ✅ 아임포트 실제 환불 처리 추가
+        OrderHistoryDTO order = mapper.selectOrderDetail(orderId);
+        String orderNo = order.getOrderNo(); // OrderHistoryDTO에 orderNo 필드 필요
+        customerPaymentService.cancelPayment(order.getOrderNo(), "비즈니스 거절로 인한 취소");
+
+        if (order.getBidId() != null) {
+            bidService.rejectByBusiness(order.getBidId());
+        }
+    }
+
+    @Transactional
+    public void updateDeliveryStatus(Long orderId, int deliveryStatus) {
+        mapper.updateDeliveryStatus(orderId, deliveryStatus);
+        log.info("배송 상태 변경 - orderId: {}, status: {}", orderId, deliveryStatus);
+
+        if (deliveryStatus == 4) {
+            OrderHistoryDTO order = mapper.selectOrderDetail(orderId);
+            
+            mapper.updateDueDate(orderId, java.time.LocalDateTime.now());
+
+            // ✅ request 상태 COMPLETE로 변경
+            if (order.getBidId() != null) {
+                Long requestId = mapper.selectRequestIdByBidId(order.getBidId());
+                requestMapper.updateStatus(requestId, "COMPLETE");
+                log.info("의뢰 완료 처리 - requestId: {}", requestId);
+            }
+
+            // 기존 정산 로직
+            int exists = settlementMapper.existsSettlement(orderId);
+            if (exists == 0) {
+                int sales      = order.getTotalAmount();
+                int commission = (int) Math.round(sales * 0.1);
+                int settlement = sales - commission;
+
+                settlementMapper.insertSettlement(
+                    order.getBusinessId(),
+                    orderId,
+                    sales,
+                    commission,
+                    settlement
+                );
+                log.info("정산 생성 - orderId: {}, settlement: {}", orderId, settlement);
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public OrderHistoryDTO getOrderDetail(Long orderId) {
+        OrderHistoryDTO order = mapper.selectOrderDetail(orderId);
+        if (order != null) {
+            order.setItems(mapper.selectOrderItems(orderId));
+        }
+        return order;
+    }
+    
+    @Transactional(readOnly = true) 
+    public List<ScheduleOrderDTO> getScheduleOrders(Long businessId) {
+    List<ScheduleOrderDTO> orders = mapper.selectScheduleOrders(businessId);
+     return orders; 
+     
+    }
+    
+    @Transactional
+    public Long getOrCreateChatRoom(Long orderId) {
+        OrderHistoryDTO order = mapper.selectOrderDetail(orderId);
+        if (order.getRoomId() != null) return order.getRoomId();
+
+        mapper.insertChatRoom(order.getBidId(), order.getCustomerId(), order.getBusinessId());
+        Long roomId = mapper.selectRoomIdByBidId(
+            order.getBidId(), order.getCustomerId(), order.getBusinessId()
+        );
+        int exists = mapper.selectChatFunctionExists(roomId);
+        if (exists == 0) {
+            mapper.insertChatFunction(roomId, order.getBusinessId(), order.getCustomerId());
+        }
+        return roomId;
+    }
+    
+    @Transactional(readOnly = true)
+    public int getUnreadCount(Long roomId) {
+        if (roomId == null) return 0;
+        return mapper.selectUnreadCount(roomId);
+    }
+}

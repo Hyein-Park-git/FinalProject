@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nextage.web.mapper.BusinessOrderHistoryMapper">
+
+    <select id="selectAcceptedOrders" resultType="com.nextage.web.domain.OrderHistoryDTO">
+        SELECT
+            o.order_id, o.order_no, o.business_id, o.bid_id,
+            o.total_amount, o.payment_status, o.delivery_status,
+            o.accept_status, o.due_date, o.created_at, o.customer_id,
+            c.nickname AS customer_nickname, cr.room_id,
+            b.expected_due_date AS bid_expected_due_date,
+            r.request_id
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN bids b ON b.bid_id = o.bid_id
+        LEFT JOIN request r ON r.request_id = b.request_id
+        LEFT JOIN chat_room cr ON cr.bid_id      = o.bid_id
+                               AND cr.business_id = o.business_id
+                               AND cr.customer_id = o.customer_id
+        WHERE o.business_id    = #{businessId}
+          AND o.payment_status IN ('PAID', 'CANCELLED')
+          AND o.accept_status IN ('ACCEPTED', 'REJECTED')
+          AND o.bid_id IS NOT NULL
+        <if test="search != null and search.keyword != null and search.keyword != ''">
+            AND (
+                c.nickname LIKE CONCAT('%', #{search.keyword}, '%')
+                OR o.order_no LIKE CONCAT('%', #{search.keyword}, '%')
+                OR EXISTS (
+                    SELECT 1 FROM order_items oi
+                    LEFT JOIN kit k ON k.kit_id = oi.kit_id
+                    LEFT JOIN bids b2 ON b2.bid_id = o.bid_id
+                    LEFT JOIN request r2 ON r2.request_id = b2.request_id
+                    WHERE oi.order_id = o.order_id
+                      AND (
+                          k.name LIKE CONCAT('%', #{search.keyword}, '%')
+                          OR r2.title LIKE CONCAT('%', #{search.keyword}, '%')
+                      )
+                )
+            )
+        </if>
+        <if test="search != null and search.startDate != null and search.startDate != ''">
+            AND o.created_at >= #{search.startDate}
+        </if>
+        <if test="search != null and search.endDate != null and search.endDate != ''">
+            AND o.created_at &lt; DATE_ADD(#{search.endDate}, INTERVAL 1 DAY)
+        </if>
+        ORDER BY o.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAcceptedOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        WHERE o.business_id    = #{businessId}
+          AND o.payment_status = 'PAID'
+          AND o.accept_status IN ('ACCEPTED', 'REJECTED')
+          AND o.bid_id IS NOT NULL
+        <if test="search != null and search.keyword != null and search.keyword != ''">
+            AND (
+                c.nickname LIKE CONCAT('%', #{search.keyword}, '%')
+                OR o.order_no LIKE CONCAT('%', #{search.keyword}, '%')
+                OR EXISTS (
+                    SELECT 1 FROM order_items oi
+                    LEFT JOIN kit k ON k.kit_id = oi.kit_id
+                    LEFT JOIN bids b ON b.bid_id = o.bid_id
+                    LEFT JOIN request r ON r.request_id = b.request_id
+                    WHERE oi.order_id = o.order_id
+                      AND (
+                          k.name LIKE CONCAT('%', #{search.keyword}, '%')
+                          OR r.title LIKE CONCAT('%', #{search.keyword}, '%')
+                      )
+                )
+            )
+        </if>
+        <if test="search != null and search.startDate != null and search.startDate != ''">
+            AND o.created_at >= #{search.startDate}
+        </if>
+        <if test="search != null and search.endDate != null and search.endDate != ''">
+            AND o.created_at &lt; DATE_ADD(#{search.endDate}, INTERVAL 1 DAY)
+        </if>
+    </select>
+
+    <select id="selectAllOrdersForAdmin" resultType="com.nextage.web.domain.OrderHistoryDTO">
+        SELECT
+            o.order_id, o.order_no, o.business_id, o.bid_id,
+            o.total_amount, o.payment_status, o.delivery_status,
+            o.accept_status, o.due_date, o.created_at, o.customer_id,
+            c.nickname AS customer_nickname, cr.room_id,
+            b.expected_due_date AS bid_expected_due_date,
+            r.request_id
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN bids b ON b.bid_id = o.bid_id
+        LEFT JOIN request r ON r.request_id = b.request_id
+        LEFT JOIN chat_room cr ON cr.bid_id      = o.bid_id
+                               AND cr.business_id = o.business_id
+                               AND cr.customer_id = o.customer_id
+        WHERE o.payment_status IN ('PAID', 'CANCELLED')
+          AND o.bid_id IS NOT NULL
+        <if test="search != null and search.keyword != null and search.keyword != ''">
+            AND (
+                c.nickname LIKE CONCAT('%', #{search.keyword}, '%')
+                OR o.order_no LIKE CONCAT('%', #{search.keyword}, '%')
+                OR EXISTS (
+                    SELECT 1 FROM order_items oi
+                    LEFT JOIN kit k ON k.kit_id = oi.kit_id
+                    LEFT JOIN bids b2 ON b2.bid_id = o.bid_id
+                    LEFT JOIN request r2 ON r2.request_id = b2.request_id
+                    WHERE oi.order_id = o.order_id
+                      AND (
+                          k.name LIKE CONCAT('%', #{search.keyword}, '%')
+                          OR r2.title LIKE CONCAT('%', #{search.keyword}, '%')
+                      )
+                )
+            )
+        </if>
+        <if test="search != null and search.startDate != null and search.startDate != ''">
+            AND o.created_at >= #{search.startDate}
+        </if>
+        <if test="search != null and search.endDate != null and search.endDate != ''">
+            AND o.created_at &lt; DATE_ADD(#{search.endDate}, INTERVAL 1 DAY)
+        </if>
+        ORDER BY o.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAllOrdersForAdmin" resultType="int">
+        SELECT COUNT(*)
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        WHERE o.payment_status = 'PAID'
+          AND o.bid_id IS NOT NULL
+        <if test="search != null and search.keyword != null and search.keyword != ''">
+            AND (
+                c.nickname LIKE CONCAT('%', #{search.keyword}, '%')
+                OR o.order_no LIKE CONCAT('%', #{search.keyword}, '%')
+                OR EXISTS (
+                    SELECT 1 FROM order_items oi
+                    LEFT JOIN kit k ON k.kit_id = oi.kit_id
+                    LEFT JOIN bids b ON b.bid_id = o.bid_id
+                    LEFT JOIN request r ON r.request_id = b.request_id
+                    WHERE oi.order_id = o.order_id
+                      AND (
+                          k.name LIKE CONCAT('%', #{search.keyword}, '%')
+                          OR r.title LIKE CONCAT('%', #{search.keyword}, '%')
+                      )
+                )
+            )
+        </if>
+        <if test="search != null and search.startDate != null and search.startDate != ''">
+            AND o.created_at >= #{search.startDate}
+        </if>
+        <if test="search != null and search.endDate != null and search.endDate != ''">
+            AND o.created_at &lt; DATE_ADD(#{search.endDate}, INTERVAL 1 DAY)
+        </if>
+    </select>
+
+    <select id="selectPendingOrders" resultType="com.nextage.web.domain.OrderHistoryDTO">
+        SELECT
+            o.order_id, o.order_no, o.business_id, o.bid_id,
+            o.total_amount, o.payment_status, o.delivery_status,
+            o.accept_status, o.due_date, o.created_at, o.customer_id,
+            c.nickname AS customer_nickname, cr.room_id,
+            b.expected_due_date AS bid_expected_due_date,
+            r.request_id
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN bids b ON b.bid_id = o.bid_id
+        LEFT JOIN request r ON r.request_id = b.request_id
+        LEFT JOIN chat_room cr ON cr.bid_id      = o.bid_id
+                               AND cr.business_id = o.business_id
+                               AND cr.customer_id = o.customer_id
+        WHERE o.business_id    = #{businessId}
+          AND o.payment_status = 'PAID'
+          AND o.accept_status  = 'PENDING'
+          AND o.bid_id IS NOT NULL
+        ORDER BY o.created_at DESC
+    </select>
+
+    <select id="selectPendingOrdersAll" resultType="com.nextage.web.domain.OrderHistoryDTO">
+        SELECT
+            o.order_id, o.order_no, o.business_id, o.bid_id,
+            o.total_amount, o.payment_status, o.delivery_status,
+            o.accept_status, o.due_date, o.created_at, o.customer_id,
+            c.nickname AS customer_nickname, cr.room_id,
+            b.expected_due_date AS bid_expected_due_date,
+            r.request_id
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN bids b ON b.bid_id = o.bid_id
+        LEFT JOIN request r ON r.request_id = b.request_id
+        LEFT JOIN chat_room cr ON cr.bid_id      = o.bid_id
+                               AND cr.business_id = o.business_id
+                               AND cr.customer_id = o.customer_id
+        WHERE o.payment_status = 'PAID'
+          AND o.accept_status  = 'PENDING'
+          AND o.bid_id IS NOT NULL
+        ORDER BY o.created_at DESC
+    </select>
+
+    <select id="selectOrderDetail" resultType="com.nextage.web.domain.OrderHistoryDTO">
+        SELECT
+            o.order_id, o.order_no, o.business_id, o.bid_id,
+            o.total_amount, o.payment_status, o.delivery_status,
+            o.accept_status, o.due_date, o.created_at, o.customer_id,
+            c.nickname AS customer_nickname, cr.room_id,
+            b.expected_due_date AS bid_expected_due_date,
+            r.request_id
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN bids b ON b.bid_id = o.bid_id
+        LEFT JOIN request r ON r.request_id = b.request_id
+        LEFT JOIN chat_room cr ON cr.bid_id      = o.bid_id
+                               AND cr.business_id = o.business_id
+                               AND cr.customer_id = o.customer_id
+        WHERE o.order_id = #{orderId}
+    </select>
+
+    <select id="selectOrderItems" resultType="com.nextage.web.domain.OrderItemsDTO">
+        SELECT
+            oi.order_item_id,
+            oi.kit_id,
+            o.business_id,
+            oi.quantity,
+            oi.price,
+            COALESCE(k.name, r.title, '개인거래 상품') AS product_name,
+            COALESCE(k.main_image1, a.image_url) AS image_url,
+            (SELECT COUNT(*) > 0
+               FROM review r2
+              WHERE r2.order_item_id = oi.order_item_id) AS reviewed
+        FROM order_items oi
+        JOIN orders o ON o.order_id = oi.order_id
+        LEFT JOIN kit k ON k.kit_id = oi.kit_id
+        LEFT JOIN bids b ON b.bid_id = o.bid_id
+        LEFT JOIN request r ON r.request_id = b.request_id
+        LEFT JOIN attachment a ON a.ref_type = 'REQ'
+                               AND a.ref_id = r.request_id
+                               AND a.is_thumbnail = 1
+        WHERE oi.order_id = #{orderId}
+    </select>
+
+    <select id="selectOrdersByBusinessId" resultType="com.nextage.web.domain.OrderHistoryDTO">
+        SELECT
+            o.order_id, o.order_no, o.business_id, o.bid_id,
+            o.total_amount, o.payment_status, o.delivery_status,
+            o.accept_status, o.due_date, o.created_at, o.customer_id,
+            c.nickname AS customer_nickname, cr.room_id
+        FROM orders o
+        JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN chat_room cr ON cr.bid_id      = o.bid_id
+                               AND cr.business_id = o.business_id
+                               AND cr.customer_id = o.customer_id
+        WHERE o.business_id    = #{businessId}
+          AND o.payment_status = 'PAID'
+          AND o.bid_id IS NOT NULL
+        ORDER BY o.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countOrdersByBusinessId" resultType="int">
+        SELECT COUNT(*)
+        FROM orders o
+        WHERE o.business_id    = #{businessId}
+          AND o.payment_status = 'PAID'
+          AND o.bid_id IS NOT NULL
+    </select>
+
+    <insert id="insertChatRoom">
+        INSERT INTO chat_room (bid_id, customer_id, business_id)
+        VALUES (#{bidId}, #{customerId}, #{businessId})
+    </insert>
+
+    <select id="selectRoomIdByBidId" resultType="java.lang.Long">
+        SELECT room_id
+        FROM chat_room
+        WHERE bid_id      = #{bidId}
+          AND customer_id = #{customerId}
+          AND business_id = #{businessId}
+        LIMIT 1
+    </select>
+
+    <insert id="insertChatFunction">
+        INSERT INTO chat_function (room_id, business_id, customer_id)
+        VALUES (#{roomId}, #{businessId}, #{customerId})
+    </insert>
+
+    <update id="updateDeliveryStatus">
+        UPDATE orders SET delivery_status = #{deliveryStatus}
+        WHERE order_id = #{orderId}
+    </update>
+
+    <update id="updateAcceptStatus">
+        UPDATE orders SET accept_status = #{acceptStatus}
+        WHERE order_id = #{orderId}
+    </update>
+
+    <select id="selectScheduleOrders" resultType="com.nextage.web.domain.ScheduleOrderDTO">
+        SELECT
+            o.order_id   AS orderId,
+            o.order_no   AS orderNo,
+            o.due_date   AS dueDate,
+            o.created_at AS createdAt,
+            r.title      AS requestTitle,
+            c.nickname   AS customerNickname
+        FROM orders o
+        JOIN bids b ON o.bid_id = b.bid_id
+        JOIN request r ON b.request_id = r.request_id
+        JOIN customer c ON o.customer_id = c.customer_id
+        WHERE o.business_id    = #{businessId}
+          AND o.bid_id IS NOT NULL
+          AND o.payment_status = 'PAID'
+          AND o.accept_status  = 'ACCEPTED'
+          AND o.due_date IS NOT NULL
+        ORDER BY o.due_date ASC
+    </select>
+
+    <select id="selectRequestIdByBidId" resultType="Long">
+        SELECT request_id FROM bids WHERE bid_id = #{bidId}
+    </select>
+    
+    <select id="selectChatFunctionExists" resultType="int">
+	    SELECT COUNT(*)
+	    FROM chat_function
+	    WHERE room_id = #{roomId}
+	</select>
+
+	<select id="selectUnreadCount" resultType="int">
+	    SELECT COUNT(*)
+	    FROM chat_message
+	    WHERE room_id = #{roomId}
+	      AND is_read = 0
+	      AND sender_type = 'CUSTOMER'
+	</select>
+	
+	<update id="updatePaymentStatus">
+	    UPDATE orders 
+	    SET payment_status = #{paymentStatus}
+	    WHERE order_id = #{orderId}
+	</update>
+	
+	<update id="updateRequestStatusToComplete">
+	    UPDATE request r
+	    JOIN bids b ON b.request_id = r.request_id
+	    SET r.status = 'COMPLETE'
+	    WHERE b.bid_id = #{bidId}
+	</update>
+	
+	<update id="updateDueDate">
+	    UPDATE orders
+	    SET due_date = #{dueDate}
+	    WHERE order_id = #{orderId}
+	</update>
+</mapper>

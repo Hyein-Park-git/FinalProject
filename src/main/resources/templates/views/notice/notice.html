@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{|layouts/${userType}-layout|}">
+ 
+<head>
+    <title>Notice</title>
+    <link rel="stylesheet" th:href="@{/css/mypage/notice.css}">
+</head>
+<body>
+	<div layout:fragment="content">
+	    <div class="notice-board-container">
+	    
+<div class="board-title-area text-center mb-5">
+    <h2 class="brand-title">Notice</h2>
+    <p class="text-muted mb-0">새로운 소식과 안내사항을 확인하세요.</p>
+</div>
+
+<!-- 검색 헤더 (좌, 중, 우 3분할 레이아웃) -->
+<div class="board-header d-flex align-items-center justify-content-between mb-4">
+    
+    <!-- 1. 좌측 빈 공간 (검색창을 완벽하게 중앙에 두기 위한 밸런스 용도) -->
+    <div style="flex: 1;"></div>
+
+    <!-- 2. 중앙 검색 영역 -->
+    <div class="search-wrapper d-flex gap-2 justify-content-center" style="flex: 2; max-width: 650px;">
+        
+        <!-- Select 박스에도 search-input 클래스를 주어 디자인 통일 -->
+        <select class="search-input" id="searchTarget"  style="width: 110px; flex: none; cursor: pointer; appearance: none; text-align: center; text-align-last: center; padding: 12px 10px;">
+		    
+		    <option value="" th:selected="${selectedTarget == '' or selectedTarget == null}">-- 전체 --</option>
+		    <option value="ALL" th:selected="${selectedTarget == 'ALL'}">ALL</option>
+		    <option value="CUSTOMER" th:selected="${selectedTarget == 'CUSTOMER'}">CUSTOMER</option>
+		    <option value="BUSINESS" th:selected="${selectedTarget == 'BUSINESS'}">BUSINESS</option>
+		    
+		</select>
+		        
+        <input type="text" class="search-input" id="searchKeyword" th:value="${keyword}" 
+           style="flex: 1;" placeholder="제목이나 내용을 검색하세요" onkeyup="if(window.event.keyCode==13){searchNotice()}">
+           
+ 
+    <button class="action-btn primary" onclick="searchNotice()" 
+            style="white-space: nowrap; min-width: 80px; flex: none;">검색</button>
+    </div>
+
+    <!-- 3. 우측 '새 공지 작성' (여백에 자연스럽게 숨기기) -->
+    <div style="flex: 1; text-align: right;">
+        <a sec:authorize="hasAnyRole('CADMIN','BADMIN')" href="/notice/write" 
+           style="color: #a1a1a6; font-size: 0.9rem; font-weight: 600; text-decoration: underline; transition: color 0.2s;">
+            + 새 공지 작성
+        </a>
+    </div>
+
+</div>
+
+	    
+
+
+
+
+      
+        <!-- 카드형 리스트 -->
+        <div class="notice-list">
+            <a th:each="notice : ${noticeList}" th:href="@{/notice/detail/{id}(id=${notice.noticeId})}" class="notice-item">
+        	<div class="item-top">
+                    <span class="target-badge" 
+                          th:classappend="${notice.target == 'ALL' ? 'target-all' : (notice.target == 'CUSTOMER' ? 'target-customer-' + userType : 'target-business-' + userType)}"
+                          th:text="${notice.target}">ALL</span>
+                    <span class="notice-date" th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd')}">2024-03-20</span>
+                </div>
+                <div class="notice-title" th:text="${notice.title}">공지사항 제목이 표시됩니다.</div>
+            </a>
+
+            <!-- 데이터가 없을 때 -->
+            <div th:if="${#lists.isEmpty(noticeList)}" class="empty-msg" style="text-align:center; padding: 100px 0; color:#86868b;">
+                등록된 공지사항이 없습니다.
+            </div>
+        </div>
+
+    
+    </div>
+
+
+<script>
+    function searchNotice() {
+        const target = document.getElementById('searchTarget').value;
+        const keyword = document.getElementById('searchKeyword').value;
+        
+
+        location.href = `/notice?target=${target}&keyword=${encodeURIComponent(keyword)}`;
+    }
+</script>
+</div>
+
+</body>
+</html>

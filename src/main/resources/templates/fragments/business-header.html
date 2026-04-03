@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+			xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <header th:fragment="header" class="main-header-container">
+        <div class="header-inner">
+            <div class="header-logo">
+                <a th:href="@{/business/main}">
+                    <img th:src="@{/images/logo2.png}" alt="Nextage Logo" class="logo-image">
+                </a>
+            </div>
+
+            <nav class="header-nav">
+                <ul class="nav-list">
+                    <li><a th:href="@{/business/notice}">공지사항</a></li>
+                    <li><a class="dropdown-item" th:href="@{/business/my-portfolio}">포트폴리오</a></li>
+                    <li>
+                    	<div class="dropdown">
+							<button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+							  결제/배송
+							</button>
+							<ul class="dropdown-menu">
+							  <li><a class="dropdown-item" th:href="@{/business/settlement}">수익/정산</a></li>
+							  <li><a class="dropdown-item" th:href="@{/business/order/history}">주문내역</a></li>
+							</ul>
+						</div>
+					</li>
+                    <li>
+                    	<div class="dropdown">
+							<button class="btn btn-secondary dropdown-toggle"
+							        type="button"
+							        data-bs-toggle="dropdown"
+							        aria-expanded="false">
+							  마이 페이지
+							</button>
+							<ul class="dropdown-menu">
+							  <li><a class="dropdown-item" th:href="@{/business/mypage}" sec:authorize="hasRole('BUSER')">정보수정</a></li>
+							  <li><a class="dropdown-item" th:href="@{/business/bids/list}">내 제안</a></li>
+							  <li><a class="dropdown-item" th:href="@{/business/schedule}">내 일정</a></li>
+							</ul>
+						</div>
+					</li>
+					<li class="login-item" style="position:relative; display:flex; align-items:center;">
+					    <div sec:authorize="isAuthenticated()"
+						     style="position:absolute; top:100%; right:10px; margin-top:20px;
+						            font-size:14px; font-weight:500; color:#aaa;
+						            white-space:nowrap;">
+						    반갑습니다, <span th:text="${#authentication.getPrincipal().getBusiness().getCompanyName()}"></span>님
+						</div>
+					    <a sec:authorize="isAnonymous()" th:href="@{/business/login}" class="login-btn">Login</a>
+					    <a sec:authorize="isAuthenticated()" th:href="@{/auth/business/logoutAction}" class="login-btn">Logout</a>
+					</li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+</html>

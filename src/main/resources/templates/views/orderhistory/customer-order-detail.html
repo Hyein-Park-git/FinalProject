@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/customer-layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>구매 상세 - Nextage</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Pretendard', sans-serif; background: #fafafa; color: #333; }
+        .detail-wrapper { max-width: 900px; margin: 40px auto; padding: 0 20px 80px; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 13px; color: #bd93f9; font-weight: 600;
+            text-decoration: none; margin-bottom: 24px; transition: gap 0.2s;
+        }
+        .back-btn:hover { gap: 10px; }
+        .page-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 32px; font-weight: 900; color: #222; margin-bottom: 6px;
+        }
+        .page-subtitle { font-size: 14px; color: #aaa; margin-bottom: 32px; }
+        .info-card {
+            background: #fff; border: 1px solid #ebebeb; border-radius: 16px;
+            padding: 24px 28px; margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .info-card-title {
+            font-size: 11px; font-weight: 700; color: #bbb;
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px;
+        }
+        .info-row {
+            display: flex; justify-content: space-between;
+            font-size: 14px; margin-bottom: 12px; align-items: center;
+        }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label { color: #aaa; }
+        .info-value { font-weight: 600; color: #333; }
+        .info-value.paid { color: #bd93f9; font-weight: 700; }
+        .delivery-badge {
+            font-size: 12px; font-weight: 700;
+            padding: 4px 14px; border-radius: 20px;
+            white-space: nowrap; display: inline-block;
+        }
+        .delivery-checking { background: #fef3e2; color: #e67e22; border: 1px solid #fad7a0; }
+        .delivery-ready    { background: #eaf4fb; color: #2e86c1; border: 1px solid #aed6f1; }
+        .delivery-ing      { background: #e8f0fe; color: #4285f4; border: 1px solid #c5d8fd; }
+        .delivery-done     { background: #f0f0f0; color: #888;    border: 1px solid #e0e0e0; }
+        .delivery-cancel   { background: #fff5f5; color: #ff6b6b; border: 1px solid #ffc2c2; }
+        .accept-badge {
+            font-size: 12px; font-weight: 700;
+            padding: 4px 14px; border-radius: 20px;
+            white-space: nowrap; display: inline-block;
+        }
+        .accept-pending  { background: #fff8e1; color: #f59e0b; border: 1px solid #fde68a; }
+        .accept-accepted { background: #eefbf3; color: #2ecc71; border: 1px solid #a7f3d0; }
+        .accept-rejected { background: #fff5f5; color: #ff6b6b; border: 1px solid #ffc2c2; }
+        .delivery-tracker {
+            display: flex; align-items: center; margin: 20px 0 8px; gap: 0;
+        }
+        .tracker-step {
+            display: flex; flex-direction: column; align-items: center;
+            flex: 1; position: relative;
+        }
+        .tracker-step:not(:last-child)::after {
+            content: ''; position: absolute; top: 14px; left: 50%;
+            width: 100%; height: 2px; background: #ebebeb; z-index: 0;
+        }
+        .tracker-step.active::after { background: #bd93f9; }
+        .tracker-dot {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #ebebeb; border: 2px solid #e0e0e0;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1; position: relative; transition: all 0.3s;
+        }
+        .tracker-step.active .tracker-dot {
+            background: linear-gradient(135deg, #bd93f9, #a6c1ee); border-color: #bd93f9;
+        }
+        .tracker-step.current .tracker-dot {
+            background: linear-gradient(135deg, #bd93f9, #a6c1ee); border-color: #bd93f9;
+            box-shadow: 0 0 0 4px rgba(189,147,249,0.2);
+        }
+        .tracker-dot-inner { width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+        .tracker-label {
+            font-size: 11px; font-weight: 600; color: #bbb;
+            margin-top: 8px; text-align: center; white-space: nowrap;
+        }
+        .tracker-step.active .tracker-label,
+        .tracker-step.current .tracker-label { color: #bd93f9; }
+        .order-item-row {
+            display: flex; align-items: center;
+            gap: 16px; padding: 18px 0; border-bottom: 1px solid #f5f5f5;
+        }
+        .order-item-row:last-of-type { border-bottom: none; }
+        .item-img {
+            width: 72px; height: 72px; object-fit: cover;
+            border-radius: 12px; border: 1px solid #eee; flex-shrink: 0;
+        }
+        .item-info { flex: 1; min-width: 0; }
+        .item-name {
+            font-size: 15px; font-weight: 700; color: #222; margin-bottom: 5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .item-qty { font-size: 13px; color: #bbb; }
+        .item-price {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 17px; font-weight: 900; color: #333;
+            flex-shrink: 0; min-width: 90px; text-align: right;
+        }
+        .btn-review {
+            padding: 9px 20px; font-size: 13px; font-weight: 700; color: #fff;
+            background: linear-gradient(135deg, #bd93f9, #a6c1ee);
+            border: none; border-radius: 20px; cursor: pointer;
+            transition: all 0.3s; flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(189,147,249,0.3); white-space: nowrap;
+        }
+        .btn-review:hover { transform: translateY(-2px); }
+        .btn-reviewed {
+            padding: 9px 20px; font-size: 13px; font-weight: 700; color: #bd93f9;
+            background: #f8f5ff; border: 1.5px solid #bd93f9;
+            border-radius: 20px; cursor: pointer; flex-shrink: 0; white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .btn-reviewed:hover { background: #ede9fe; }
+        .btn-chat {
+            padding: 9px 20px; font-size: 13px; font-weight: 700; color: #fff;
+            background: linear-gradient(135deg, #6dca8a, #a8e6cf);
+            border: none; border-radius: 20px; cursor: pointer;
+            transition: all 0.3s; flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(109,202,138,0.3);
+            text-decoration: none; display: inline-flex; align-items: center;
+            white-space: nowrap;
+        }
+        .btn-chat:hover { transform: translateY(-2px); color: #fff; }
+        .total-row {
+            display: flex; justify-content: space-between;
+            align-items: center; padding-top: 20px;
+            border-top: 1px solid #f0f0f0; margin-top: 4px;
+        }
+        .total-label { font-size: 16px; font-weight: 700; color: #333; }
+        .total-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 26px; font-weight: 900;
+            background: linear-gradient(to right, #a78bfa, #a6c1ee);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .action-row {
+            display: flex; justify-content: flex-end;
+            margin-top: 16px; padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .delete-area {
+            background: #f5f5f5; border: 1px solid #ebebeb; border-radius: 16px;
+            padding: 16px 28px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .delete-area-text { font-size: 13px; color: #bbb; }
+        .btn-delete-order {
+            padding: 9px 20px; font-size: 13px; font-weight: 700; color: #ff6b6b;
+            background: #fff5f5; border: 1.5px solid #ffc2c2;
+            border-radius: 20px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-delete-order:hover { background: #ff6b6b; color: #fff; border-color: #ff6b6b; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="detail-wrapper">
+
+        <a href="/customer/order/history" class="back-btn">&larr; 구매내역으로</a>
+
+        <h2 class="page-title">구매 상세</h2>
+        <p class="page-subtitle" th:text="${order.orderNo}">ORDER_...</p>
+
+        <!-- 주문 정보 -->
+        <div class="info-card">
+            <div class="info-card-title">주문 정보</div>
+            <div class="info-row">
+                <span class="info-label">주문번호</span>
+                <span class="info-value" th:text="${order.orderNo}"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">결제일시</span>
+                <span class="info-value"
+                      th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">결제상태</span>
+                <span class="info-value paid">결제완료</span>
+            </div>
+
+            <div class="info-row" th:if="${order.bidId != null}">
+                <span class="info-label">업체 수락 상태</span>
+                <span class="accept-badge accept-pending"
+                      th:if="${order.acceptStatus == 'PENDING'}">검토중</span>
+                <span class="accept-badge accept-accepted"
+                      th:if="${order.acceptStatus == 'ACCEPTED'}">수락됨</span>
+                <span class="accept-badge accept-rejected"
+                      th:if="${order.acceptStatus == 'REJECTED'}">거절됨</span>
+            </div>
+
+            <div class="info-row" th:if="${order.acceptStatus != 'REJECTED'}">
+                <span class="info-label">배송 상태</span>
+                <span class="delivery-badge delivery-checking"
+                      th:if="${order.deliveryStatus == 1}">결제확인중</span>
+                <span class="delivery-badge delivery-ready"
+                      th:if="${order.deliveryStatus == 2}">배송준비</span>
+                <span class="delivery-badge delivery-ing"
+                      th:if="${order.deliveryStatus == 3}">배송중</span>
+                <span class="delivery-badge delivery-done"
+                      th:if="${order.deliveryStatus == 4}">배송완료</span>
+                <span class="delivery-badge delivery-cancel"
+                      th:if="${order.deliveryStatus == 9}">취소</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">결제금액</span>
+                <span class="info-value"
+                      th:text="${#numbers.formatInteger(order.totalAmount, 3, 'COMMA') + '원'}"></span>
+            </div>
+
+            <th:block th:if="${order.deliveryStatus != 9 and order.acceptStatus != 'REJECTED'}">
+                <div class="delivery-tracker">
+                    <div th:class="${order.deliveryStatus == 1} ? 'tracker-step current'
+                                 : (${order.deliveryStatus > 1} ? 'tracker-step active' : 'tracker-step')">
+                        <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+                        <div class="tracker-label">결제확인중</div>
+                    </div>
+                    <div th:class="${order.deliveryStatus == 2} ? 'tracker-step current'
+                                 : (${order.deliveryStatus > 2} ? 'tracker-step active' : 'tracker-step')">
+                        <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+                        <div class="tracker-label">배송준비</div>
+                    </div>
+                    <div th:class="${order.deliveryStatus == 3} ? 'tracker-step current'
+                                 : (${order.deliveryStatus > 3} ? 'tracker-step active' : 'tracker-step')">
+                        <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+                        <div class="tracker-label">배송중</div>
+                    </div>
+                    <div th:class="${order.deliveryStatus == 4} ? 'tracker-step current active' : 'tracker-step'">
+                        <div class="tracker-dot"><div class="tracker-dot-inner"></div></div>
+                        <div class="tracker-label">배송완료</div>
+                    </div>
+                </div>
+            </th:block>
+
+            <th:block th:if="${order.deliveryStatus == 9 or order.acceptStatus == 'REJECTED'}">
+                <div style="margin-top: 16px;">
+                    <span class="delivery-badge delivery-cancel">이 주문은 취소되었습니다.</span>
+                </div>
+            </th:block>
+        </div>
+
+        <!-- 주문 상품 -->
+        <div class="info-card">
+            <div class="info-card-title">주문 상품</div>
+
+            <div th:each="item : ${order.items}" class="order-item-row">
+
+                <!-- ✅ 이미지에 링크 + 기본 이미지 적용 -->
+                <a th:href="${order.bidId != null}
+                           ? '/customer/request/detail/' + ${order.requestId}
+                           : '/customer/shop/detail?id=' + ${item.kitId}"
+                   style="text-decoration:none; flex-shrink:0; display:block;">
+                    <img class="item-img"
+                         th:src="${item.imageUrl != null ? item.imageUrl : '/image/default-profile.png'}"
+                         onerror="this.src='/image/default-profile.png'"
+                         th:alt="${item.productName}">
+                </a>
+
+                <div class="item-info">
+                    <a th:href="${order.bidId != null}
+                               ? '/customer/request/detail/' + ${order.requestId}
+                               : '/customer/shop/detail?id=' + ${item.kitId}"
+                       style="text-decoration:none; color:inherit;">
+                        <div class="item-name" th:text="${item.productName}"
+                             style="cursor:pointer;"
+                             onmouseover="this.style.color='#bd93f9'"
+                             onmouseout="this.style.color='#222'">상품명</div>
+                    </a>
+                    <div class="item-qty" th:text="${item.quantity} + '개'">1개</div>
+                </div>
+
+                <div class="item-price"
+                     th:text="${#numbers.formatInteger(item.price * item.quantity, 3, 'COMMA') + '원'}">
+                </div>
+
+                <!-- 후기 버튼 -->
+                <th:block th:if="${order.bidId != null and order.deliveryStatus == 4}">
+                    <button class="btn-reviewed"
+                            th:if="${item.reviewed}"
+                            th:onclick="|location.href='/business/portfolio/' + ${order.businessId} + '?reviewId=' + ${item.reviewId}|">
+                        후기 보기
+                    </button>
+                    <button class="btn-review"
+                            th:if="${!item.reviewed}"
+                            th:onclick="|location.href='/customer/review/write?orderItemId=' + ${item.orderItemId}|">
+                        후기 작성
+                    </button>
+                </th:block>
+            </div>
+
+            <div class="total-row">
+                <span class="total-label">총 결제 금액</span>
+                <span class="total-value"
+                      th:text="${#numbers.formatInteger(order.totalAmount, 3, 'COMMA') + '원'}"></span>
+            </div>
+        </div>
+
+        <!-- 구매내역 삭제 영역 -->
+        <div class="delete-area">
+            <span class="delete-area-text">해당 주문 내역을 삭제할 수 있습니다.</span>
+            <button class="btn-delete-order"
+                    th:data-order-id="${order.orderId}"
+                    onclick="confirmDelete(this)">
+                구매내역 삭제
+            </button>
+        </div>
+
+    </div>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+        function confirmDelete(btn) {
+            if (!confirm('이 주문 내역을 삭제하시겠습니까?\n삭제된 내역은 복구되지 않습니다.')) return;
+
+            var orderId = btn.dataset.orderId;
+
+            fetch('/customer/order/delete/' + orderId, { method: 'DELETE' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    location.href = '/customer/order/history';
+                } else {
+                    alert(data.message || '삭제에 실패했습니다.');
+                }
+            })
+            .catch(function() { alert('오류가 발생했습니다.'); });
+        }
+    /*]]>*/
+    </script>
+
+</th:block>
+</body>
+</html>

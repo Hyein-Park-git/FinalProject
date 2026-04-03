@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nextage</title>
+    <link th:href="@{/bootstrap/bootstrap.min.css}" rel="stylesheet" >
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link th:href="@{/css/customerMain/customerHeader.css}" rel="stylesheet" />
+    <link th:href="@{/css/customerMain/customerFooter.css}" rel="stylesheet" />
+    <script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+    <style>
+        #globalChatBtn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #6e8efb, #a777e3); border-radius: 50%; box-shadow: 0 8px 24px rgba(110, 142, 251, 0.4); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 9999; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid rgba(255, 255, 255, 0.2); }
+        #globalChatBtn:hover { transform: translateY(-5px) scale(1.05); }
+        #globalChatBadge { position: absolute; top: -2px; right: -2px; background-color: #ff3b30; color: #fff; font-size: 11px; font-weight: 800; min-width: 20px; height: 20px; border-radius: 10px; display: none; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid #fff; }
+        #globalChatBtn svg { width: 28px; height: 28px; fill: #fff; }
+        #miniChatDrawer { position: fixed; bottom: 100px; right: 30px; width: 360px; height: 550px; background: #fff; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; z-index: 9998; border: 1px solid #f0f0f0; }
+        .mini-header { padding: 18px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        .mini-header h6 { margin: 0; font-weight: 800; font-size: 15px; color: #1d1d1f; cursor: default; }
+        .mini-body { flex: 1; overflow-y: auto; background: #fff; position: relative; }
+        .launcher-menu { display: flex; flex-direction: column; padding: 20px; gap: 15px; }
+        .launcher-btn { background: #fff; border: 1px solid #d1d1d6; padding: 20px; border-radius: 12px; cursor: pointer; text-align: left; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); position: relative; }
+        .launcher-btn:hover { background: #f4f4f7; transform: translateY(-2px); }
+        .launcher-btn-title { font-weight: 800; font-size: 15px; color: #1c1c1e; margin-bottom: 5px; }
+        .launcher-btn-desc { font-size: 12px; color: #8e8e93; }
+        .menu-red-dot { position: absolute; top: 20px; right: 20px; width: 8px; height: 8px; background-color: #ff3b30; border-radius: 50%; display: none; }
+        .mini-room-item { padding: 15px 20px; border-bottom: 1px solid #f9f9f9; cursor: pointer; transition: 0.2s; }
+        .mini-room-item:hover { background: #f5f5f7; }
+        .mini-chat-content { display: none; flex-direction: column; height: 100%; position: absolute; top: 0; left: 0; width: 100%; background: #fff; z-index: 10; }
+        .mini-msg-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .mini-footer { padding: 12px 15px; border-top: 1px solid #f0f0f0; background: #fff; z-index: 11; }
+        .mini-input-wrap { background: #f2f2f7; border-radius: 20px; display: flex; align-items: center; padding: 5px 12px; }
+        .mini-input-wrap input { flex: 1; background: transparent; border: none; padding: 8px; font-size: 13px; }
+        .mini-input-wrap input:focus { outline: none; }
+        .mini-photo-btn { cursor: pointer; color: #8e8e93; font-size: 18px; margin-right: 8px; transition: 0.2s; }
+        .mini-photo-btn:hover { color: #007aff; }
+        .mini-send-btn { color: #007aff; font-weight: 700; cursor: pointer; font-size: 13px; margin-left: 8px; }
+        .mini-msg-row { display: flex; align-items: flex-end; width: 100%; margin-bottom: 4px; }
+        .mini-msg-row.right { flex-direction: row-reverse; }
+        .mini-msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; font-size: 13px; line-height: 1.4; }
+        .mini-msg-right { background: #007aff; color: #fff; border-bottom-right-radius: 4px; }
+        .mini-msg-left { background: #f2f2f7; color: #1c1c1e; border-bottom-left-radius: 4px; }
+        .mini-msg-time { font-size: 9px; color: #aeaeae; margin: 0 5px; }
+        .mini-back-btn { cursor: pointer; font-size: 18px; color: #8e8e93; margin-right: 10px; }
+        .msg-image-only { background: transparent !important; padding: 0 !important; }
+        #miniPreviewContainer { display: none !important; padding: 10px 15px; border-top: 1px solid #f0f0f0; background: #fff; position: relative; }
+        #miniPreviewImg { max-width: 60px; max-height: 60px; border-radius: 8px; border: 1px solid #eee; }
+        #miniClearImgBtn { position: absolute; top: 5px; left: 65px; background: #8e8e93; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .ai-system-msg { text-align: center; font-size: 11px; color: #8e8e93; font-weight: 600; margin: 15px 0; }
+        .quick-reply-wrap { padding: 10px 20px 0 20px; display: flex; gap: 8px; overflow-x: auto; background: #fff; border-top: 1px solid #f0f0f0; }
+        .quick-reply-wrap::-webkit-scrollbar { display: none; }
+        .quick-btn { background: #fff; border: 1px solid #007aff; color: #007aff; font-size: 11px; padding: 6px 12px; border-radius: 15px; cursor: pointer; white-space: nowrap; font-weight: 600; transition: 0.2s; }
+        .quick-btn:hover { background: #007aff; color: #fff; }
+        .quick-btn-danger { border: 1px solid #ff3b30; color: #ff3b30; }
+        .quick-btn-danger:hover { background: #ff3b30; color: #fff; }
+        .ai-load-past-btn { text-align: center; font-size: 11px; color: #8e8e93; text-decoration: underline; cursor: pointer; padding: 10px 0; margin-bottom: 10px; }
+        .ai-load-past-btn:hover { color: #1d1d1f; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid px-5">
+        <div th:replace="~{fragments/customer-header::header}"></div>
+        <main class="mt-4"><div layout:fragment="content"></div></main>
+        <div th:replace="~{fragments/customer-footer::footer}"></div>
+    </div>
+
+    <div th:if="${#authorization.expression('isAuthenticated()')}">
+        <div id="miniChatDrawer">
+            <div class="mini-header">
+                <div class="d-flex align-items-center">
+                    <span class="mini-back-btn" id="miniBackBtn" style="display:none;">&larr;</span>
+                    <h6 id="miniHeaderTitle" onclick="goToFullChat()" style="cursor:pointer;">고객 지원</h6>
+                </div>
+                <span style="cursor:pointer; color:#8e8e93; font-size:14px;" onclick="toggleMiniChat()">✕</span>
+            </div>
+            <div class="mini-body" id="miniBody">
+                <div id="launcherMenu" class="launcher-menu">
+                    <div class="launcher-btn" onclick="openTransactionChat()">
+                        <div class="launcher-btn-title">1:1 거래 채팅</div>
+                        <div class="launcher-btn-desc">파트너와 진행 중인 거래 대화 내역</div>
+                        <div id="dotTransaction" class="menu-red-dot"></div>
+                    </div>
+                    <div class="launcher-btn" onclick="openAIChat()">
+                        <div class="launcher-btn-title">고객센터 챗봇</div>
+                        <div class="launcher-btn-desc">24시간 빠른 시스템 문제 해결</div>
+                        <div id="dotAI" class="menu-red-dot"></div>
+                    </div>
+                </div>
+
+                <div id="miniRoomList" style="display:none;"></div>
+
+                <div class="mini-chat-content" id="miniChatView">
+                    <div class="mini-msg-area" id="miniMsgArea"></div>
+                    <div id="miniPreviewContainer"><img id="miniPreviewImg" src=""><button id="miniClearImgBtn" onclick="clearMiniPreview()">✕</button></div>
+                    <div class="mini-footer">
+                        <div class="mini-input-wrap">
+                            <input type="file" id="miniFileInput" style="display:none;" accept="image/*" onchange="previewMiniFile()">
+                            <span class="mini-photo-btn" onclick="document.getElementById('miniFileInput').click()">⊕</span>
+                            <input type="text" id="miniInput" placeholder="메시지 입력...">
+                            <span class="mini-send-btn" onclick="sendMiniMsg()">보내기</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mini-chat-content" id="aiChatView">
+                    <div class="mini-msg-area" id="aiMsgArea"></div>
+                    <div class="quick-reply-wrap">
+                        <span class="quick-btn" onclick="sendAiQuickMsg('환불 규정')">환불 규정</span>
+                        <span class="quick-btn" onclick="sendAiQuickMsg('이용 절차')">이용 절차</span>
+                        <span class="quick-btn" onclick="sendAiQuickMsg('수수료 안내')">수수료 안내</span>
+                        <span class="quick-btn quick-btn-danger" onclick="finishAiConsult()">상담 종료</span>
+                    </div>
+                    <div class="mini-footer" style="border-top:none; padding-top:8px;">
+                        <div class="mini-input-wrap">
+                            <input type="text" id="aiInput" placeholder="AI에게 질문하기...">
+                            <span class="mini-send-btn" onclick="sendAiMsg()">전송</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="globalChatBtn" onclick="toggleMiniChat()">
+            <span id="globalChatBadge">0</span>
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.25c0 2.457 1.082 4.67 2.85 6.27-.12.633-.6 2.053-1.35 2.93-.11.13-.15.31-.09.47.06.16.21.28.39.28 2.34 0 4.08-.94 4.89-1.54.98.24 2.02.36 3.09.36 5.523 0 10-4.145 10-9.25S17.523 2 12 2zm0 16.5c-.93 0-1.83-.11-2.69-.32-.19-.05-.39 0-.54.12-.55.4-1.6.99-3.15 1.25.4-.65.75-1.5 1-2.33.06-.2-.01-.4-.17-.54-1.57-1.31-2.52-3.13-2.52-5.18 0-4.14 3.96-7.5 8.83-7.5s8.83 3.36 8.83 7.5-3.96 7.5-8.83 7.5z"/></svg>
+        </div>
+    </div>
+
+    <script th:src="@{/bootstrap/bootstrap.bundle.min.js}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script th:inline="javascript">
+        let miniStomp = null;
+        let userData = null;
+        let currentMiniRoomId = null;
+        let currentMiniSub = null;
+        let selectedMiniFile = null;
+
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const targetDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const diffDays = Math.floor((today - targetDate) / (24 * 60 * 60 * 1000));
+            if (diffDays === 0) return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+            if (diffDays === 1) return '어제';
+            return d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0');
+        }
+
+        function toggleMiniChat() {
+            const drawer = document.getElementById('miniChatDrawer');
+            if(!drawer) return;
+            const isVisible = drawer.style.display === 'flex';
+            drawer.style.display = isVisible ? 'none' : 'flex';
+            if (!isVisible) {
+                document.getElementById('launcherMenu').style.display = 'flex';
+                document.getElementById('miniRoomList').style.display = 'none';
+                document.getElementById('miniChatView').style.display = 'none';
+                document.getElementById('aiChatView').style.display = 'none';
+                document.getElementById('miniBackBtn').style.display = 'none';
+                document.getElementById('miniHeaderTitle').innerText = '고객 지원';
+                if(currentMiniSub) { currentMiniSub.unsubscribe(); currentMiniSub = null; }
+                currentMiniRoomId = null;
+                clearMiniPreview();
+                updateGlobalBadge();
+            }
+        }
+
+        function goBack() {
+            if (document.getElementById('miniChatView').style.display === 'flex') {
+                document.getElementById('miniChatView').style.display = 'none';
+                document.getElementById('miniRoomList').style.display = 'block';
+                document.getElementById('miniHeaderTitle').innerText = '1:1 거래 채팅';
+                if(currentMiniSub) { currentMiniSub.unsubscribe(); currentMiniSub = null; }
+                currentMiniRoomId = null;
+            } else if (document.getElementById('miniRoomList').style.display === 'block' || document.getElementById('aiChatView').style.display === 'flex') {
+                document.getElementById('miniRoomList').style.display = 'none';
+                document.getElementById('aiChatView').style.display = 'none';
+                document.getElementById('launcherMenu').style.display = 'flex';
+                document.getElementById('miniBackBtn').style.display = 'none';
+                document.getElementById('miniHeaderTitle').innerText = '고객 지원';
+            }
+        }
+
+        function openTransactionChat() {
+            document.getElementById('launcherMenu').style.display = 'none';
+            document.getElementById('miniChatView').style.display = 'none';
+            document.getElementById('aiChatView').style.display = 'none';
+            document.getElementById('miniRoomList').style.display = 'block';
+            document.getElementById('miniBackBtn').style.display = 'block';
+            document.getElementById('miniHeaderTitle').innerText = '1:1 거래 채팅';
+            
+            fetch('/chat/mini/rooms').then(res => res.json()).then(rooms => {
+                const list = document.getElementById('miniRoomList');
+                if(!list) return;
+                list.innerHTML = '';
+                if(!rooms || rooms.length === 0) { list.innerHTML = '<div style="padding:50px; text-align:center; color:#8e8e93; font-size:13px;">대화가 없습니다.</div>'; return; }
+                rooms.forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'mini-room-item';
+                    const badgeHtml = r.unreadCount > 0 ? `<span class="badge bg-danger rounded-pill" id="mini-unread-${r.roomId}">${r.unreadCount}</span>` : '';
+                    const displayMsg = (r.lastMessage && r.lastMessage.startsWith('/images/')) ? '(사진)' : (r.lastMessage || '대화 없음');
+                    item.innerHTML = `<div class="d-flex justify-content-between"><span style="font-weight:700; font-size:14px; color:#1c1c1e;">${r.partnerName}</span>${badgeHtml}</div><div class="d-flex justify-content-between mt-1"><div style="font-size:12px; color:#8e8e93;" class="text-truncate">${displayMsg}</div><small style="font-size:10px; color:#aeaeae;">${formatDisplayDate(r.lastMessageTime)}</small></div>`;
+                    item.onclick = () => openMiniChat(r.roomId, r.partnerName);
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        function openAIChat() {
+            document.getElementById('launcherMenu').style.display = 'none';
+            document.getElementById('miniRoomList').style.display = 'none';
+            document.getElementById('miniChatView').style.display = 'none';
+            document.getElementById('aiChatView').style.display = 'flex';
+            document.getElementById('miniBackBtn').style.display = 'block';
+            document.getElementById('miniHeaderTitle').innerText = 'AI 고객센터';
+            loadAiChatHistory();
+        }
+
+        function finishAiConsult() {
+            if(confirm('상담을 종료하시겠습니까?')) {
+                saveAiChatHistory('BOT', '상담이 종료되었습니다.');
+                saveAiChatHistory('SYSTEM', '새로운 상담 시작');
+                saveAiChatHistory('BOT', '안녕하세요 NEXTAGE 챗봇입니다. 무엇을 도와드릴까요?');
+                toggleMiniChat();
+            }
+        }
+
+        function loadAiChatHistory() {
+            const area = document.getElementById('aiMsgArea');
+            area.innerHTML = '';
+            const history = JSON.parse(localStorage.getItem('ai_chat_history_customer')) || [];
+            
+            if (history.length === 0) {
+                appendAiMsg('BOT', '안녕하세요 NEXTAGE 챗봇입니다. 무엇을 도와드릴까요?');
+                saveAiChatHistory('BOT', '안녕하세요 NEXTAGE 챗봇입니다. 무엇을 도와드릴까요?');
+                return;
+            }
+
+            let splitIndex = -1;
+            for (let i = history.length - 1; i >= 0; i--) {
+                if (history[i].role === 'SYSTEM' && history[i].content === '새로운 상담 시작') {
+                    splitIndex = i;
+                    break;
+                }
+            }
+
+            if (splitIndex > 0) {
+                const loadBtn = document.createElement('div');
+                loadBtn.id = 'loadPastBtn';
+                loadBtn.className = 'ai-load-past-btn';
+                loadBtn.innerText = '이전 대화 내역 보기';
+                loadBtn.onclick = function() {
+                    document.getElementById('pastHistoryWrapper').style.display = 'block';
+                    this.style.display = 'none';
+                };
+                area.appendChild(loadBtn);
+
+                const pastWrapper = document.createElement('div');
+                pastWrapper.id = 'pastHistoryWrapper';
+                pastWrapper.style.display = 'none';
+                for (let i = 0; i < splitIndex; i++) {
+                    renderMsgToContainer(pastWrapper, history[i].role, history[i].content);
+                }
+                area.appendChild(pastWrapper);
+            }
+
+            const startIndex = splitIndex !== -1 ? splitIndex : 0;
+            for (let i = startIndex; i < history.length; i++) {
+                renderMsgToContainer(area, history[i].role, history[i].content);
+            }
+            
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function renderMsgToContainer(container, role, content) {
+            if (role === 'SYSTEM') {
+                const sysDiv = document.createElement('div');
+                sysDiv.className = 'ai-system-msg';
+                sysDiv.innerHTML = `<span>${content}</span>`;
+                container.appendChild(sysDiv);
+            } else {
+                const isUser = role === 'USER';
+                const row = document.createElement('div');
+                row.className = `mini-msg-row ${isUser ? 'right' : 'left'}`;
+                const bubbleClass = isUser ? 'mini-msg-right' : 'mini-msg-left';
+                row.innerHTML = `<div class="mini-msg-bubble ${bubbleClass}"><span>${content}</span></div>`;
+                container.appendChild(row);
+            }
+        }
+
+        function appendAiMsg(role, content) {
+            const area = document.getElementById('aiMsgArea');
+            if(!area) return;
+            renderMsgToContainer(area, role, content);
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function saveAiChatHistory(role, content) {
+            const history = JSON.parse(localStorage.getItem('ai_chat_history_customer')) || [];
+            history.push({ role, content });
+            localStorage.setItem('ai_chat_history_customer', JSON.stringify(history));
+        }
+
+        function sendAiQuickMsg(text) {
+            document.getElementById('aiInput').value = text;
+            sendAiMsg();
+        }
+
+        function sendAiMsg() {
+            const input = document.getElementById('aiInput');
+            const text = input.value.trim();
+            if (!text || !userData) return;
+
+            appendAiMsg('USER', text);
+            saveAiChatHistory('USER', text);
+            input.value = '';
+
+            fetch('/api/cs/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: text,
+                    userType: userData.userType 
+                })
+            }).then(res => res.json()).then(data => {
+                appendAiMsg('BOT', data.reply);
+                saveAiChatHistory('BOT', data.reply);
+            }).catch(err => {
+                appendAiMsg('BOT', '시스템 연결 대기중입니다. 백엔드 구성이 완료되면 정상 응답합니다.');
+            });
+        }
+
+        function markAsRead(roomId) {
+            if(!roomId || !userData) return;
+            fetch(`/chat/read/${roomId}?userType=${userData.userType}`, { method: 'POST' }).then(() => {
+                const badge = document.getElementById('mini-unread-' + roomId);
+                if(badge) { badge.innerText = '0'; badge.style.display = 'none'; }
+                updateGlobalBadge();
+            });
+        }
+
+        function updateGlobalBadge() {
+            const badge = document.getElementById('globalChatBadge');
+            if(!badge) return;
+            if(userData && (userData.userType === 'CADMIN' || userData.userType === 'BADMIN')) return; 
+            fetch('/chat/global-info').then(res => res.json()).then(data => {
+                badge.innerText = data.unreadCount;
+                badge.style.display = data.unreadCount > 0 ? 'flex' : 'none';
+                
+                const dotTransaction = document.getElementById('dotTransaction');
+                if(dotTransaction) {
+                    dotTransaction.style.display = data.unreadCount > 0 ? 'block' : 'none';
+                }
+            });
+        }
+
+        function updateOrderPageBadge(roomId) {
+            if (!roomId) return;
+            document.querySelectorAll('[data-room-id="' + roomId + '"]').forEach(function(wrap) {
+            	fetch('/customer/order/chat/unread/' + roomId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var badge = wrap.querySelector('.unread-badge');
+                    if (!badge) return;
+                    if (data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'inline-flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        function openMiniChat(roomId, name) {
+            if(currentMiniSub) { currentMiniSub.unsubscribe(); }
+            currentMiniRoomId = roomId;
+            document.getElementById('miniRoomList').style.display = 'none';
+            document.getElementById('miniChatView').style.display = 'flex';
+            document.getElementById('miniHeaderTitle').innerText = name;
+            markAsRead(roomId);
+            currentMiniSub = miniStomp.subscribe('/sub/chat/room/' + roomId, function(msg) {
+                const received = JSON.parse(msg.body);
+                appendMiniMsg(received);
+                if(received.senderType !== userData.userType) markAsRead(roomId);
+            });
+            fetch('/chat/mini/messages?roomId=' + roomId).then(res => res.json()).then(msgs => {
+                const area = document.getElementById('miniMsgArea');
+                if(!area) return;
+                area.innerHTML = '';
+                if(msgs) msgs.forEach(m => appendMiniMsg(m));
+                area.scrollTop = area.scrollHeight;
+            });
+        }
+
+        function appendMiniMsg(m) {
+            const area = document.getElementById('miniMsgArea');
+            if(!area || !userData) return;
+            const dateObj = m.sendAt ? new Date(m.sendAt) : new Date();
+            const isMy = m.senderId === userData.myId && m.senderType === userData.userType;
+            const row = document.createElement('div');
+            row.className = `mini-msg-row ${isMy ? 'right' : 'left'}`;
+            let contentHtml = `<div class="mini-msg-bubble ${isMy ? 'mini-msg-right' : 'mini-msg-left'} ${m.messageType === 'IMAGE' ? 'msg-image-only' : ''}">`;
+            if(m.messageType === 'IMAGE') { contentHtml += `<img src="${m.content}" style="max-width:100%; border-radius:8px;">`; }
+            else { contentHtml += `<span>${m.content}</span>`; }
+            row.innerHTML = contentHtml + `</div><span class="mini-msg-time">${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}</span>`;
+            area.appendChild(row);
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function sendMiniMsg() {
+            const input = document.getElementById('miniInput');
+            if(!miniStomp || !userData || (!input.value.trim() && !selectedMiniFile)) return;
+            if (selectedMiniFile) {
+                const formData = new FormData();
+                formData.append("file", selectedMiniFile);
+                fetch('/chat/upload', { method: 'POST', body: formData }).then(res => res.text()).then(url => {
+                    miniStomp.send("/pub/chat/send", {}, JSON.stringify({ roomId: currentMiniRoomId, senderId: userData.myId, senderType: userData.userType, content: url, messageType: 'IMAGE' }));
+                    clearMiniPreview();
+                    if (input.value.trim()) { sendMiniText(input.value.trim()); input.value = ''; }
+                });
+            } else {
+                sendMiniText(input.value.trim());
+                input.value = '';
+            }
+        }
+
+        function sendMiniText(txt) {
+            miniStomp.send("/pub/chat/send", {}, JSON.stringify({ roomId: currentMiniRoomId, senderId: userData.myId, senderType: userData.userType, content: txt, messageType: 'TEXT' }));
+        }
+
+        function previewMiniFile() {
+            selectedMiniFile = document.getElementById('miniFileInput').files[0];
+            if (selectedMiniFile) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('miniPreviewImg').src = e.target.result;
+                    document.getElementById('miniPreviewContainer').setAttribute('style', 'display: block !important');
+                };
+                reader.readAsDataURL(selectedMiniFile);
+            }
+        }
+
+        function clearMiniPreview() {
+            selectedMiniFile = null;
+            const fileInput = document.getElementById('miniFileInput');
+            if(fileInput) fileInput.value = '';
+            const img = document.getElementById('miniPreviewImg');
+            if(img) img.src = '';
+            const container = document.getElementById('miniPreviewContainer');
+            if(container) container.setAttribute('style', 'display: none !important');
+        }
+
+        function goToChat(bidId, customerId, businessId) {
+            fetch('/chat/get-or-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bidId: bidId, customerId: customerId, businessId: businessId })
+            }).then(res => res.json()).then(roomId => { location.href = '/chat?roomId=' + roomId; });
+        }
+
+        function goToFullChat() {
+            if (currentMiniRoomId) {
+                location.href = '/chat?roomId=' + currentMiniRoomId;
+            }
+        }
+
+        (function init() {
+            const chatBtn = document.getElementById('globalChatBtn');
+            if (!chatBtn || window.location.pathname.includes('/chat')) { if(chatBtn) chatBtn.style.display = 'none'; return; }
+            const backBtn = document.getElementById('miniBackBtn');
+            if(backBtn) backBtn.onclick = goBack;
+            const miniInput = document.getElementById('miniInput');
+            if(miniInput) miniInput.onkeypress = (e) => { if(e.key === 'Enter') sendMiniMsg(); };
+            const aiInput = document.getElementById('aiInput');
+            if(aiInput) aiInput.onkeypress = (e) => { if(e.key === 'Enter') sendAiMsg(); };
+            fetch('/chat/global-info').then(res => {
+                if(!res.ok) throw new Error();
+                return res.json();
+            }).then(data => {
+                userData = data;
+                updateGlobalBadge();
+                const socket = new SockJS('/ws-chat');
+                miniStomp = Stomp.over(socket);
+                miniStomp.debug = null;
+                miniStomp.connect({}, function() {
+                    miniStomp.subscribe('/sub/chat/user/' + data.userType + '/' + data.myId, function(msg) {
+                        const m = JSON.parse(msg.body);
+                        updateGlobalBadge();
+                        updateOrderPageBadge(m.roomId);
+                    });
+                });
+            }).catch(() => { if(chatBtn) chatBtn.style.display = 'none'; });
+        })();
+        
+    </script>
+    
+    <th:block layout:fragment="script"></th:block>
+</body>
+</html>
